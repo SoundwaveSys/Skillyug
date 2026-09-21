@@ -1,0 +1,132 @@
+/**
+ * Firebase Storage Security Rules
+ * 
+ * These rules control access to files in Firebase Storage
+ * 
+ * Key Principles:
+ * - Only authenticated users can upload files
+ * - Users can only delete their own files
+ * - File size and type restrictions
+ * - Public read access for question images
+ * 
+ * Deploy using: firebase deploy --only storage:rules
+ */
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ==================== HELPER FUNCTIONS ====================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Validate image file type
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // Validate file size (max 5MB for question images)
+    function isValidSize(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024;
+    }
+    
+    // ==================== QUESTION IMAGES ====================
+    
+    match /questions/{subjectId}/{questionId}/{fileName} {
+      // Anyone can read question images (public access)
+      allow read: if true;
+      
+      // Only admins can upload question images
+      allow create: if isAdmin() &&
+                      isImage() &&
+                      isValidSize(5);
+      
+      // Only admins can update question images
+      allow update: if isAdmin() &&
+                      isImage() &&
+                      isValidSize(5);
+      
+      // Only admins can delete question images
+      allow delete: if isAdmin();
+    }
+    
+    // ==================== PROFILE PICTURES ====================
+    
+    match /profiles/{userId}/{fileName} {
+      // Anyone authenticated can read profile pictures
+      allow read: if isAuthenticated();
+      
+      // Users can upload/update their own profile picture
+      // Admins can manage any profile picture
+      allow create, update: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+      
+      // Validate profile pictures
+      allow create, update: if isImage() &&
+                              isValidSize(2) && // 2MB max for profiles
+                              (request.resource.contentType == 'image/jpeg' ||
+                               request.resource.contentType == 'image/png' ||
+                               request.resource.contentType == 'image/webp');
+      
+      // Users can delete their own profile picture
+      allow delete: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+    }
+    
+    // ==================== TEMPORARY UPLOADS ====================
+    
+    match /temp/{userId}/{fileName} {
+      // Users can manage their own temp files
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Temp files should be small
+      allow create: if isValidSize(10);
+      
+      // Auto-expire temp files (handled by Cloud Functions)
+    }
+    
+    // ==================== ADMIN UPLOADS ====================
+    
+    match /admin/{allPaths=**} {
+      // Only admins can access admin folder
+      allow read, write: if isAdmin();
+    }
+    
+    // ==================== EXPORTS ====================
+    
+    match /exports/{userId}/{fileName} {
+      // Users can read their own exports
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      
+      // System can create exports
+      allow create: if isAuthenticated();
+      
+      // Users can delete their own exports
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ==================== PUBLIC ASSETS ====================
+    
+    match /public/{allPaths=**} {
+      // Anyone can read public assets
+      allow read: if true;
+      
+      // Only admins can upload public assets
+      allow write: if isAdmin();
+    }
+    
+    // ==================== DEFAULT DENY ====================
+    
+    // Deny all other access by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

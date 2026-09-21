@@ -1,0 +1,184 @@
+.guardian-verification-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(15, 5, 70);
+  overflow-x: hidden;
+  padding: 2rem 1rem;
+}
+
+.guardian-verification-container {
+  position: relative;
+  z-index: 1;
+  max-width: 450px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 auto;
+}
+
+.guardian-verification-title {
+  color: rgb(15, 5, 70);
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+}
+
+.guardian-verification-subtitle {
+  color: #52607a;
+  font-size: 0.9rem;
+  margin: -0.25rem 0 0 0;
+  text-align: center;
+}
+
+.guardian-verification-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  color: rgb(15, 5, 70);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.form-group input {
+  padding: 0.75rem;
+  border: 2px solid #dbe2ef;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  color: rgb(15, 5, 70);
+  text-align: center;
+  letter-spacing: 2px;
+  font-weight: 600;
+}
+
+.form-group input::placeholder {
+  color: rgb(15, 5, 70);
+  opacity: 0.5;
+  letter-spacing: normal;
+  font-weight: normal;
+}
+
+.form-group input:focus {
+  border-color: rgb(15, 5, 70);
+  box-shadow: 0 0 0 3px rgba(15, 5, 70, 0.1);
+}
+
+.otp-timer {
+  text-align: center;
+  color: #52607a;
+  font-size: 0.9rem;
+  margin: -0.5rem 0;
+}
+
+.resend-otp-btn {
+  background: transparent;
+  color: rgb(15, 5, 70);
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: opacity 0.2s;
+}
+
+.resend-otp-btn:hover {
+  opacity: 0.8;
+}
+
+.send-otp-btn,
+.verify-otp-btn {
+  width: 100%;
+  background: rgb(15, 5, 70);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.send-otp-btn:hover:not(:disabled),
+.verify-otp-btn:hover:not(:disabled) {
+  background: #2a5298;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.send-otp-btn:active:not(:disabled),
+.verify-otp-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.send-otp-btn:disabled,
+.verify-otp-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.guardian-back-btn {
+  width: 100%;
+  background: white;
+  color: rgb(15, 5, 70);
+  border: 2px solid #dbe2ef;
+  border-radius: 10px;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.guardian-back-btn:hover {
+  border-color: rgb(15, 5, 70);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.guardian-back-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .guardian-verification-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .guardian-verification-container {
+    padding: 1.5rem;
+  }
+
+  .guardian-verification-title {
+    font-size: 1.4rem;
+  }
+
+  .guardian-verification-subtitle {
+    font-size: 0.85rem;
+  }
+}

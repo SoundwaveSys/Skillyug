@@ -1,0 +1,95 @@
+.main-navbar {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 90px;
+	background-color: rgb(15, 5, 70);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 40px;
+	box-sizing: border-box;
+	z-index: 2000;
+}
+
+
+
+.main-navbar-menu {
+	list-style: none;
+	display: flex;
+	gap: 3rem;
+	margin-right: 40px;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+    
+.main-navbar-menu li {
+	margin: 0 ;
+	padding: 0;
+}
+
+.main-navbar-menu li a {
+	color: #fff;
+	text-decoration: none;
+	font-size: 1rem;
+	font-weight: 500;
+	transition: color 0.2s;
+}
+
+.main-navbar-menu li a:hover {
+	color: #e02d01;
+}
+
+/* Hamburger (hidden on desktop) */
+.main-navbar-toggle {
+	display: none;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	padding: 8px;
+	align-items: center;
+	justify-content: center;
+}
+.main-navbar-toggle .bar {
+	display: block;
+	width: 22px;
+	height: 2px;
+	background: #fff;
+	margin: 4px 0;
+	transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.main-navbar-toggle.open .bar:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.main-navbar-toggle.open .bar:nth-child(2) { opacity: 0; }
+.main-navbar-toggle.open .bar:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+/* Responsive: collapse menu into hamburger */
+@media (max-width: 768px) {
+	.main-navbar {
+		padding: 0 16px;
+		height: 70px;
+	}
+	.main-navbar-menu {
+		display: none;
+		position: absolute;
+		top: 70px;
+		right: 0;
+		width: 280px;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.75rem;
+		background: rgb(15, 5, 70);
+		box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+		border-radius: 8px;
+	}
+	.main-navbar-menu.open {
+		display: flex;
+	}
+	.main-navbar-menu li { padding: 0.5rem 0; }
+	.main-navbar-menu li a { font-size: 1rem; }
+	.main-navbar-toggle { display: flex; }
+
+	.main-navbar-logo{
+		scale:0.9;
+		
+	}
+}

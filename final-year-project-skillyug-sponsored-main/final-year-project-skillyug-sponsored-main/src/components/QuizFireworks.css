@@ -1,0 +1,351 @@
+/* Quiz Fireworks Animation - Optimized for Quiz Celebrations */
+.quiz-fireworks-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 2000;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.1); /* Slight overlay to make fireworks more visible */
+}
+
+.quiz-firework {
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+/* Quiz Rocket Launch - Faster and more celebratory */
+.quiz-rocket {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 8px;
+  background: linear-gradient(to top, var(--rocket-color), white);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: quiz-rocket-launch 0.8s ease-out forwards;
+  box-shadow: 0 0 12px var(--rocket-color), 0 0 24px var(--rocket-color), 0 0 36px var(--rocket-color);
+}
+
+.quiz-rocket-trail {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 15px;
+  background: linear-gradient(to bottom, transparent, var(--rocket-color));
+  animation: quiz-trail-extend 0.6s ease-out forwards;
+  opacity: 0.9;
+}
+
+@keyframes quiz-rocket-launch {
+  0% {
+    bottom: -10px;
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.4);
+  }
+  100% {
+    bottom: var(--burst-height);
+    opacity: 0;
+    transform: translateX(-50%) scale(0.8);
+  }
+}
+
+@keyframes quiz-trail-extend {
+  0% {
+    height: 0px;
+    opacity: 0;
+  }
+  30% {
+    height: 25px;
+    opacity: 0.9;
+  }
+  80% {
+    height: 40px;
+    opacity: 0.7;
+  }
+  100% {
+    height: 15px;
+    opacity: 0;
+  }
+}
+
+/* Quiz Burst - More intense and celebratory */
+.quiz-burst {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+}
+
+.quiz-particle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  background: var(--particle-color);
+  border-radius: 50%;
+  animation: quiz-particle-burst 2s ease-out forwards;
+  animation-delay: var(--delay);
+  box-shadow: 
+    0 0 10px var(--particle-color),
+    0 0 20px var(--particle-color),
+    0 0 30px var(--particle-color),
+    0 0 40px var(--particle-color);
+}
+
+.gold-sparkle {
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, #ffd700, #ffed4e);
+  box-shadow: 
+    0 0 15px #ffd700,
+    0 0 30px #ffd700,
+    0 0 45px #ffd700,
+    0 0 60px #ffd700;
+  animation-duration: 3.5s;
+}
+
+@keyframes quiz-particle-burst {
+  0% {
+    transform: rotate(var(--angle)) translateY(0) scale(1);
+    opacity: 1;
+  }
+  15% {
+    transform: rotate(var(--angle)) translateY(calc(-1 * var(--distance) * 0.3)) scale(1.4);
+    opacity: 1;
+  }
+  40% {
+    transform: rotate(var(--angle)) translateY(calc(-1 * var(--distance) * 0.8)) scale(1.2);
+    opacity: 0.9;
+  }
+  70% {
+    transform: rotate(var(--angle)) translateY(calc(-1 * var(--distance))) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: rotate(var(--angle)) translateY(calc(-1 * var(--distance) * 1.5)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Success Sparkles - Ambient celebration effect */
+.success-sparkles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.success-sparkle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: var(--sparkle-color);
+  border-radius: 50%;
+  animation: success-sparkle-twinkle 2s ease-in-out;
+  opacity: 0;
+  box-shadow: 0 0 6px var(--sparkle-color), 0 0 12px var(--sparkle-color);
+}
+
+@keyframes success-sparkle-twinkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.3) rotate(0deg);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.3) rotate(90deg);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1) rotate(180deg);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1.2) rotate(270deg);
+  }
+}
+
+/* Floating sparkles for full screen coverage */
+.floating-sparkles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.floating-sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--sparkle-color);
+  border-radius: 50%;
+  animation: floating-sparkle-dance 3s ease-in-out infinite;
+  opacity: 0;
+  box-shadow: 
+    0 0 8px var(--sparkle-color), 
+    0 0 16px var(--sparkle-color),
+    0 0 24px var(--sparkle-color);
+}
+
+@keyframes floating-sparkle-dance {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.5) translateY(0px) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-20px) rotate(120deg);
+  }
+  40% {
+    opacity: 0.8;
+    transform: scale(1) translateY(-10px) rotate(240deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.3) translateY(-15px) rotate(360deg);
+  }
+  80% {
+    opacity: 0.6;
+    transform: scale(0.9) translateY(-5px) rotate(480deg);
+  }
+}
+
+/* Enhanced burst center flash for quiz celebration */
+.quiz-burst::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, white, var(--burst-color));
+  border-radius: 50%;
+  animation: quiz-center-flash 0.4s ease-out;
+  box-shadow: 
+    0 0 15px white, 
+    0 0 30px var(--burst-color),
+    0 0 45px var(--burst-color);
+}
+
+@keyframes quiz-center-flash {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(4);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(6);
+    opacity: 0;
+  }
+}
+
+/* Particle variations for more dynamic effect */
+.quiz-particle:nth-child(2n) {
+  animation-duration: 2s;
+  width: 5px;
+  height: 5px;
+}
+
+.quiz-particle:nth-child(3n) {
+  background: radial-gradient(circle, var(--particle-color), transparent);
+  width: 6px;
+  height: 6px;
+  animation-duration: 2.2s;
+}
+
+.quiz-particle:nth-child(4n) {
+  box-shadow: 
+    0 0 10px var(--particle-color),
+    0 0 20px var(--particle-color),
+    0 0 30px var(--particle-color),
+    0 0 40px var(--particle-color);
+}
+
+.quiz-particle:nth-child(5n) {
+  animation-duration: 1.6s;
+}
+
+/* Additional glow effect for celebration */
+.quiz-particle::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: inherit;
+  border-radius: inherit;
+  opacity: 0.4;
+  animation: quiz-particle-glow 1.8s ease-out forwards;
+  animation-delay: var(--delay);
+}
+
+@keyframes quiz-particle-glow {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(2.5);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Success message removed for better performance */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .quiz-particle {
+    width: 3px;
+    height: 3px;
+  }
+  
+  .gold-sparkle {
+    width: 4px;
+    height: 4px;
+  }
+  
+  .quiz-rocket {
+    width: 2px;
+    height: 5px;
+  }
+  
+  .success-sparkle {
+    width: 2px;
+    height: 2px;
+  }
+  
+  .quiz-fireworks-container::after {
+    font-size: 1.5rem;
+  }
+}
+
+/* Performance optimizations */
+.quiz-fireworks-container * {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}

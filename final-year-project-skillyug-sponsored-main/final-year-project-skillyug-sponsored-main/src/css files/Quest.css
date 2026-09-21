@@ -1,0 +1,520 @@
+.quest-container {
+  min-height: 100vh;
+  width: 100%;
+  min-width: 100vw;;
+  background-image: url('/assets/spacebg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  padding: 80px 0 100px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+
+
+.quest-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.4);
+  margin: 0;
+}
+
+.quest-xp-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));
+  padding: 0.8rem 1.5rem;
+  border-radius: 30px;
+  border: 2px solid #FFD700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.quest-xp-label {
+  font-size: 1.1rem;
+  color: #FFD700;
+  font-weight: 600;
+}
+
+.quest-xp-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+}
+
+.quest-path-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 7000px;
+  margin-top: 140px;
+  padding: 0 2rem;
+}
+
+.quest-connecting-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.quest-line-completed {
+  stroke: #FFD700;
+  stroke-width: 3;
+  stroke-dasharray: 6, 6;
+  stroke-linecap: round;
+  animation: lineGlow 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.6));
+}
+
+.quest-line-locked {
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 2;
+  stroke-dasharray: 6, 6;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+
+@keyframes lineGlow {
+  0%, 100% {
+    stroke-opacity: 0.6;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
+}
+
+.quest-checkpoint {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.quest-checkpoint:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+  z-index: 20;
+}
+
+.quest-checkpoint.locked {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.quest-checkpoint.locked:hover {
+  transform: translate(-50%, -50%);
+}
+
+.quest-checkpoint-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.quest-checkpoint:hover .quest-checkpoint-circle {
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 0 0 50px rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.05);
+}
+
+.quest-checkpoint.completed .quest-checkpoint-circle {
+  background: linear-gradient(135deg, rgba(0, 255, 100, 0.95), rgba(0, 200, 80, 0.95));
+  border-color: #00ff00;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.8), 0 0 40px rgba(0, 255, 0, 0.4);
+  animation: completedPulse 2s ease-in-out infinite;
+}
+
+.quest-checkpoint.locked .quest-checkpoint-circle {
+  background: rgba(150, 150, 150, 0.7);
+  border-color: rgba(150, 150, 150, 0.5);
+  box-shadow: 0 0 10px rgba(100, 100, 100, 0.4);
+}
+
+@keyframes completedPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.8), 0 0 40px rgba(0, 255, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 255, 0, 1), 0 0 60px rgba(0, 255, 0, 0.6);
+  }
+}
+
+.quest-checkpoint-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.quest-checkpoint-check {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 22px;
+  height: 22px;
+  background: #00ff00;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+}
+
+.quest-checkpoint-lock {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 22px;
+  height: 22px;
+  background: rgba(100, 100, 100, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+/* Quest Modal */
+.quest-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.quest-modal-content {
+  background: linear-gradient(135deg, rgba(30, 20, 80, 0.95), rgba(40, 30, 90, 0.95));
+  border: 2px solid rgba(204, 73, 21, 0.6);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+.quest-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #ffffff;
+  font-size: 2rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.quest-modal-close:hover {
+  background: rgba(255, 0, 0, 0.3);
+  transform: rotate(90deg);
+}
+
+.quest-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.quest-modal-icon {
+  font-size: 3rem;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+}
+
+.quest-modal-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.quest-modal-body {
+  color: #ffffff;
+}
+
+.quest-description {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1.5rem;
+}
+
+.quest-requirements {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.quest-requirements h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #FFD700;
+}
+
+.quest-requirements ul {
+  list-style: none;
+  padding: 0;
+}
+
+.quest-requirements li {
+  padding: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.quest-modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.quest-btn-start,
+.quest-btn-retry,
+.quest-btn-claim {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+}
+
+.quest-btn-start:hover,
+.quest-btn-retry:hover,
+.quest-btn-claim:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(255, 215, 0, 0.5);
+}
+
+.quest-btn-start:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.quest-btn-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.8rem 2rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.quest-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Quiz Modal */
+.quest-quiz-modal {
+  background: linear-gradient(135deg, rgba(30, 20, 80, 0.98), rgba(40, 30, 90, 0.98));
+  border: 2px solid rgba(204, 73, 21, 0.6);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+.quest-quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.quest-quiz-header h2 {
+  color: #FFD700;
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.quest-quiz-progress {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.quest-quiz-score {
+  color: #00ff00;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.quest-quiz-body {
+  color: #ffffff;
+}
+
+.quest-question {
+  font-size: 1.4rem;
+  margin-bottom: 2rem;
+  color: #ffffff;
+  line-height: 1.6;
+}
+
+.quest-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.quest-option {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.quest-option:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #FFD700;
+}
+
+.quest-option.selected {
+  border-color: #4169E1;
+  background: rgba(65, 105, 225, 0.2);
+}
+
+.quest-option.correct {
+  border-color: #00ff00;
+  background: rgba(0, 255, 0, 0.2);
+}
+
+.quest-option.incorrect {
+  border-color: #ff0000;
+  background: rgba(255, 0, 0, 0.2);
+}
+
+.quest-option:disabled {
+  cursor: not-allowed;
+}
+
+.quest-btn-next {
+  background: linear-gradient(135deg, #4169E1, #1E90FF);
+  color: #ffffff;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 5px 15px rgba(65, 105, 225, 0.3);
+}
+
+.quest-btn-next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(65, 105, 225, 0.5);
+}
+
+/* Results Modal */
+.quest-results-modal {
+  background: linear-gradient(135deg, rgba(30, 20, 80, 0.98), rgba(40, 30, 90, 0.98));
+  border: 2px solid rgba(204, 73, 21, 0.6);
+  border-radius: 20px;
+  padding: 3rem;
+  max-width: 600px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+
+.quest-results-modal h2 {
+  color: #FFD700;
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.quest-results-score {
+  font-size: 4rem;
+  font-weight: 700;
+  margin: 2rem 0;
+}
+
+.quest-results-score.perfect {
+  color: #00ff00;
+  text-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+}
+
+.quest-results-score.failed {
+  color: #ff4444;
+  text-shadow: 0 0 20px rgba(255, 68, 68, 0.8);
+}
+
+.quest-success-message,
+.quest-fail-message {
+  color: #ffffff;
+}
+
+.quest-congrats {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: #FFD700;
+}
+
+.quest-xp-earned {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #FFD700;
+  margin: 1rem 0;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+}
+
+.quest-new-total {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 2rem;
+}
+
+.quest-try-again {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.quest-retry-hint {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 2rem;
+}

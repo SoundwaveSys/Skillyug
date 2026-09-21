@@ -1,0 +1,104 @@
+.hexagon-profile-slider {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  
+  .hexagon-profile-wrapper {
+    width: 100%;
+    max-width: 600px;
+    height: 400px; /* fixed good height for desktop */
+    perspective: 1500px;
+    margin-top:10rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+  
+  .hexagon-slider {
+    width: 160px;
+    height: 180px;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: rotateHexagonSlider 20s linear infinite;
+  }
+  
+  @keyframes rotateHexagonSlider {
+    0% {
+      transform: rotateX(0deg) rotateY(0deg);
+    }
+    100% {
+      transform: rotateX(360deg) rotateY(0deg);
+    }
+  }
+  
+  .hexagon-item {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform: rotateX(calc((var(--position) - 1) * (360deg / var(--quantity)))) translateZ(280px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backface-visibility: hidden;
+    transition: transform 0.5s ease-in-out;
+  }
+  
+  .hexagon-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    clip-path: polygon(
+      25% 5%, 
+      75% 5%, 
+      100% 50%, 
+      75% 95%, 
+      25% 95%, 
+      0% 50%
+    );
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+  }
+  
+  .hexagon-item img:hover {
+    transform: scale(1.01);
+  }
+  
+  .hexagon-slider:hover {
+    animation-play-state: paused;
+  }
+  
+  /* Responsive */
+  /* @media (max-width: 1024px) {
+    .hexagon-profile-wrapper {
+      height: 400px;
+    }
+    .hexagon-slider {
+      width: 120px;
+      height: 150px;
+    }
+  } */
+  
+  
+  @media (max-width: 1024px) {
+    .hexagon-profile-slider {
+      display: none;
+    }
+  }
+
+  @media (min-width: 1600px) {
+   .hexagon-profile-slider {
+   scale:1;
+  }
+
+  .hexagon-slider {
+    width: 200px;
+    height: 220px;
+  }
+  }
+  

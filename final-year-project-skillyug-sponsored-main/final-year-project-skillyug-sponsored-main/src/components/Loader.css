@@ -1,0 +1,21 @@
+.loader-bg {
+  width: 100vw;
+  height: 100vh;
+  background:   rgb(15, 5, 70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+
+.loader-logo {
+  max-width: 180px;
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 8px 32px rgba(0,0,0,0.25));
+}

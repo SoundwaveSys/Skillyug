@@ -1,0 +1,216 @@
+/**
+ * Firestore Security Rules
+ * 
+ * These rules control access to Firestore collections and documents
+ * 
+ * Key Principles:
+ * - Only authenticated users can read/write data
+ * - Users can only access their own data
+ * - Admins have elevated privileges
+ * - Question data is read-only for students
+ * - Validation for data integrity
+ * 
+ * Deploy using: firebase deploy --only firestore:rules
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==================== HELPER FUNCTIONS ====================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user is the owner of the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Validate email format
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+    
+    // ==================== USERS COLLECTION ====================
+    
+    match /users/{userId} {
+      // Users can read their own profile
+      // Admins can read all profiles
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Users can create their own profile during signup
+      allow create: if isAuthenticated() && 
+                      request.auth.uid == userId &&
+                      request.resource.data.email == request.auth.token.email;
+      
+      // Users can update their own profile
+      // Admins can update any profile
+      allow update: if (isOwner(userId) || isAdmin()) &&
+                      // Cannot change role unless admin
+                      (request.resource.data.role == resource.data.role || isAdmin()) &&
+                      // Cannot change UID
+                      request.resource.data.keys().hasAll(['email']) &&
+                      isValidEmail(request.resource.data.email);
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
+      
+      // ==================== EXAM HISTORY SUB-COLLECTION ====================
+      
+      match /examHistory/{examId} {
+        // Users can read/write their own exam history
+        allow read, write: if isOwner(userId);
+        
+        // Admins can read all exam history
+        allow read: if isAdmin();
+        
+        // Validate exam data structure
+        allow create: if isOwner(userId) &&
+                        request.resource.data.keys().hasAll([
+                          'examType', 'score', 'totalQuestions', 'timestamp'
+                        ]) &&
+                        request.resource.data.score >= 0 &&
+                        request.resource.data.totalQuestions > 0;
+      }
+      
+      // ==================== PRACTICE HISTORY SUB-COLLECTION ====================
+      
+      match /practiceHistory/{practiceId} {
+        allow read, write: if isOwner(userId);
+        allow read: if isAdmin();
+      }
+    }
+    
+    // ==================== SUBJECTS COLLECTION ====================
+    
+    match /subjects/{subjectId} {
+      // Anyone authenticated can read subjects
+      allow read: if isAuthenticated();
+      
+      // Only admins can create/update/delete subjects
+      allow write: if isAdmin();
+      
+      // ==================== QUESTIONS SUB-COLLECTION ====================
+      
+      match /questions/{questionId} {
+        // Authenticated users can read questions
+        allow read: if isAuthenticated();
+        
+        // Only admins can create/update/delete questions
+        allow create: if isAdmin() &&
+                        request.resource.data.keys().hasAll([
+                          'questionText', 'options', 'correctAnswer'
+                        ]) &&
+                        request.resource.data.options.size() >= 2 &&
+                        request.resource.data.correctAnswer is int &&
+                        request.resource.data.correctAnswer >= 0 &&
+                        request.resource.data.correctAnswer < request.resource.data.options.size();
+        
+        allow update: if isAdmin();
+        
+        allow delete: if isAdmin();
+        
+        // Allow updating view/correct/incorrect counts for statistics
+        // Users can increment these fields when attempting questions
+        allow update: if isAuthenticated() &&
+                        // Only allow updating stat fields
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['viewCount', 'correctCount', 'incorrectCount', 'updatedAt']) &&
+                        // Ensure increments only (no decrements or direct sets)
+                        request.resource.data.viewCount >= resource.data.viewCount &&
+                        request.resource.data.correctCount >= resource.data.correctCount &&
+                        request.resource.data.incorrectCount >= resource.data.incorrectCount;
+      }
+    }
+    
+    // ==================== TOP-LEVEL QUESTIONS COLLECTION ====================
+    // For flat question structure (not nested under subjects)
+    
+    match /questions/{questionId} {
+      // Allow anyone to read questions (for practice and exams)
+      allow read: if true;
+      
+      // Only admins can create/update/delete questions
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // ==================== SETTINGS COLLECTION ====================
+    
+    match /settings/{settingId} {
+      // Only admins can read/write global settings
+      allow read, write: if isAdmin();
+    }
+    
+    // ==================== ANALYTICS COLLECTION ====================
+    
+    match /analytics/{analyticsId} {
+      // Authenticated users can create analytics events
+      allow create: if isAuthenticated();
+      
+      // Only admins can read analytics
+      allow read: if isAdmin();
+      
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+    
+    // ==================== ACHIEVEMENTS COLLECTION ====================
+    
+    match /achievements/{achievementId} {
+      // Everyone can read achievements
+      allow read: if isAuthenticated();
+      
+      // Only admins can manage achievements
+      allow write: if isAdmin();
+    }
+    
+    // ==================== LEADERBOARD COLLECTION ====================
+    
+    match /leaderboard/{userId} {
+      // Everyone can read leaderboard
+      allow read: if isAuthenticated();
+      
+      // Users can update their own leaderboard entry
+      allow write: if isOwner(userId);
+      
+      // Admins can manage leaderboard
+      allow write: if isAdmin();
+    }
+    
+    // ==================== NOTIFICATIONS COLLECTION ====================
+    
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // System can create notifications
+      allow create: if isAuthenticated();
+      
+      // Users can mark their notifications as read
+      allow update: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'updatedAt']);
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid;
+    }
+    
+    // ==================== DEFAULT DENY ====================
+    
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

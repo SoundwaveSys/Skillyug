@@ -1,0 +1,523 @@
+/* Home Page - Minimal Design */
+.home-page {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  z-index: 1;
+  background: rgb(15, 5, 70);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.home-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-section {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.welcome-title {
+  font-size: 4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.username-highlight {
+  color: #cc4915;
+}
+
+.home-buttons {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  min-width:40vw;
+}
+
+
+
+.home-btn {
+  padding: 0.8rem 2rem;
+  background: #cc4915 !important;
+  border: 2px solid #cc4915 !important;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 240px;
+  min-height: 100px;
+}
+
+.home-btn:hover {
+  background: #cc4915;
+  border-color: #cc4915;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(204, 73, 21, 0.4);
+}
+
+/* Fourth Button - XP Bar with Background */
+.fourth-btn {
+  padding: 0 !important;
+  overflow: visible;
+  background-image: url('/assets/xpbar.png') !important;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #ff9800 !important;
+  min-width: 400px;
+  min-height: 50px;
+  height: 70px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem !important;
+}
+
+.fourth-btn:hover {
+  border-color: #ffa726 !important;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 152, 0, 0.5);
+}
+
+.xp-level-star {
+  width: 50px;
+  height: 50px;
+  background: #cc4915;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 1rem;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.6);
+}
+
+.xp-level-number {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-top: 3px;
+}
+
+.xp-bar-container {
+  flex: 1;
+  height: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 152, 0, 0.5);
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: #cc4915;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.8);
+}
+
+/* Daily Quiz Button - Full Image */
+.daily-quiz-btn {
+  padding: 0 !important;
+  overflow: hidden;
+  background: transparent !important;
+  border: 2px solid #4caf50 !important;
+  position: relative;
+  max-width:200px;
+  max-height:100px
+}
+
+.daily-quiz-btn:hover {
+  border-color: #4caf50 !important;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+}
+
+.daily-quiz-full {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Daily Streak Split Button (Horizontal) */
+.daily-streak-btn {
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: transparent !important;
+  border: 2px solid #FFD700 !important;
+}
+
+.daily-streak-btn:hover {
+  background: transparent !important;
+  border-color: #FFD700 !important;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+}
+
+.streak-top {
+  flex: 1;
+  background: #cc4915;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid #FFD700;
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 0.95rem;
+}
+
+.streak-bottom {
+  flex: 1;
+  background: white;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.streak-count {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color:rgb(15, 5, 70);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.streak-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color:rgb(15, 5, 70);
+}
+
+/* Quest Button - Full Image */
+.quest-btn {
+  padding: 0 !important;
+  overflow: hidden;
+  background: transparent !important;
+  border: 2px solid #9C27B0 !important;
+  position: relative;
+  max-width: 200px;
+  max-height: 100px;
+}
+
+.quest-btn:hover {
+  border-color: #9C27B0 !important;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(156, 39, 176, 0.4);
+}
+
+.quest-map-full {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+  
+
+/* Quiz Modal */
+.quiz-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+  
+}
+
+.quiz-modal-content {
+  background: linear-gradient(145deg, rgb(20, 10, 80), rgb(15, 5, 70));
+  border: 2px solid #cc4915;
+  border-radius: 20px;
+  padding: 1.5rem;
+  max-width: 380px;
+  width: 90%;
+  max-height: 55vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(204, 73, 21, 0.5);  position: relative;}
+
+.quiz-modal-content::-webkit-scrollbar {
+  width: 2px;
+  display:none;
+}
+
+.quiz-modal-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.quiz-modal-content::-webkit-scrollbar-thumb {
+  background: #cc4915;
+  border-radius: 4px;
+}
+
+.quiz-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  font-size: 2rem;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  line-height: 1;
+  padding: 0;
+  z-index: 10;
+}
+
+.quiz-modal-close:hover {
+  background: rgba(204, 73, 21, 0.8);
+  border-color: #cc4915;
+  transform: rotate(90deg);
+}
+
+.quiz-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.quiz-questions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.quiz-question-block {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quiz-question-text {
+  font-size: 1rem;
+  color: #ffffff;
+  margin-bottom: 0.8rem;
+  line-height: 1.5;
+}
+
+.quiz-q-number {
+  color: #cc4915;
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+
+.quiz-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.quiz-option {
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quiz-option:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.quiz-option.selected {
+  background: rgba(204, 73, 21, 0.3);
+  border-color: #cc4915;
+}
+
+.quiz-option-label {
+  width: 22px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.quiz-option.selected .quiz-option-label {
+  background: #cc4915;
+}
+
+.quiz-submit-btn,
+.quiz-close-btn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #cc4915, #e05419);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.quiz-submit-btn:hover,
+.quiz-close-btn:hover {
+  background: linear-gradient(135deg, #e05419, #ff6a2e);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(204, 73, 21, 0.4);
+}
+
+.quiz-submit-btn:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.quiz-loading,
+.quiz-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.quiz-loading p,
+.quiz-error p {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.quiz-error p {
+  color: #ff6b6b;
+}
+
+.quiz-results-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.quiz-score-display {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.quiz-score-circle {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #cc4915, #e05419);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  box-shadow: 0 8px 24px rgba(204, 73, 21, 0.5);
+}
+
+.quiz-score-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.quiz-score-total {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.quiz-score-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.quiz-result-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  width: 100%;
+}
+
+.quiz-result-q {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.quiz-result-status {
+  margin-left: auto;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.quiz-result-status.correct {
+  color: #4caf50;
+}
+
+.quiz-result-status.wrong {
+  color: #f44336;
+}
+
+@media (max-width: 768px) {
+  .welcome-title {
+    font-size: 2rem;
+  }
+  
+  .home-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .home-btn {
+    width: 200px;
+  }
+}
+

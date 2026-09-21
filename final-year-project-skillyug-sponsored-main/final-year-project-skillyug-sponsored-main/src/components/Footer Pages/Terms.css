@@ -1,0 +1,256 @@
+/* Terms & Conditions Page Styles */
+.trms-terms-wrap {
+  width: 100vw;
+  min-height: 100vh;
+  background: rgb(15, 5, 70);
+  position: relative;
+  font-family: 'Poppins', Arial, sans-serif;
+  overflow-x: hidden;
+  padding: 100px 0 50px;
+}
+
+.trms-terms-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Hero Section */
+.trms-terms-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.trms-terms-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  background: #cc4915;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+}
+
+.trms-terms-sub {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.5rem;
+}
+
+.trms-terms-date {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Introduction */
+.trms-terms-intro {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.8s ease-out;
+}
+
+.trms-terms-intro p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.8;
+  margin: 0;
+  text-align: center;
+}
+
+/* Terms Cards */
+.trms-terms-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.trms-terms-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 2.5rem;
+  transition: all 0.3s ease;
+  animation: slideIn 0.8s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.trms-terms-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(99, 102, 241, 0.1),
+    transparent
+  );
+  transform: rotate(45deg);
+  animation: shine 3s infinite;
+}
+
+.trms-terms-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.trms-card-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.trms-terms-card h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.trms-terms-card p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
+}
+
+
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes titleGlow {
+  0% {
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.5),
+                 0 0 40px rgba(168, 85, 247, 0.3);
+  }
+  100% {
+    text-shadow: 0 0 30px rgba(99, 102, 241, 0.8),
+                 0 0 60px rgba(168, 85, 247, 0.5),
+                 0 0 80px rgba(236, 72, 153, 0.3);
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .trms-terms-container {
+    padding: 1.5rem;
+  }
+  
+  .trms-terms-title {
+    font-size: 2.8rem;
+  }
+  
+  .trms-terms-cards {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .trms-terms-wrap {
+    padding: 80px 0 30px;
+  }
+  
+  .trms-terms-container {
+    padding: 1rem;
+  }
+  
+  .trms-terms-hero {
+    margin-bottom: 2rem;
+  }
+  
+  .trms-terms-title {
+    font-size: 2.2rem;
+  }
+  
+  .trms-terms-sub {
+    font-size: 1.1rem;
+  }
+  
+  .trms-terms-cards {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .trms-terms-card {
+    padding: 2rem;
+  }
+  
+  .trms-terms-intro,
+  .trms-terms-contact-section {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .trms-terms-title {
+    font-size: 1.8rem;
+  }
+  
+  .trms-card-icon {
+    font-size: 2.5rem;
+  }
+  
+  .trms-terms-card {
+    padding: 1.5rem;
+  }
+  
+  .trms-terms-card h2 {
+    font-size: 1.3rem;
+  }
+  
+  .trms-terms-intro,
+  .trms-terms-contact-section {
+    padding: 1.5rem;
+  }
+  
+  .trms-terms-contact-section h2 {
+    font-size: 1.5rem;
+  }
+}
+

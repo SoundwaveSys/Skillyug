@@ -1,0 +1,163 @@
+.lgn-login-page {
+  position: relative;
+  min-height: 100vh;
+  width:100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(15, 5, 70);
+  overflow: hidden;
+  padding-block: 80px;
+}
+
+
+
+.lgn-login-card  {
+  position: relative;
+  z-index: 1;
+  width: 300px;
+  height:fit-content;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  padding: 28px;
+}
+
+.lgn-login-logo { height: 52px; }
+.lgn-login-header { text-align: center; margin-bottom: 18px; }
+.lgn-login-title { color: rgb(15, 5, 70) !important; font-size: 1.75rem; margin: 4px 0 4px; }
+.lgn-login-subtitle { color: rgb(15, 5, 70); margin: 0; font-size: 0.95rem; }
+
+.lgn-admin-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #dbe2ef;
+  margin-bottom: 1rem;;
+  background:rgb(15, 5, 70);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow .2s ease, transform .06s ease;
+}
+.lgn-admin-btn:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+.lgn-admin-btn:active { transform: translateY(1px); }
+.lgn-admin-icon { height: 18px; width: 18px; }
+
+
+.lgn-google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #dbe2ef;
+  background: #fff;
+  color:rgb(15, 5, 70);
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow .2s ease, transform .06s ease;
+}
+.lgn-google-btn:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+.lgn-google-btn:active { transform: translateY(1px); }
+.lgn-google-icon { height: 18px; width: 18px; }
+
+.lgn-divider  {
+  display: flex;
+  align-items: center;
+  text-transform: lowercase;
+  color: #8391a7;
+  gap: 10px;
+  margin: 16px 0;
+}
+.lgn-divider::before, .lgn-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e6ecf5;
+}
+.lgn-divider span { font-size: 0.85rem; }
+
+.lgn-login-form { display: flex; flex-direction: column; gap: 10px; }
+.lgn-login-label { color: rgb(15, 5, 70); font-size: 0.95rem; font-weight: 600; }
+
+.lgn-login-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #1e3c72;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.lgn-login-input {
+  margin-bottom: 6px;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid #dbe2ef;
+  border-radius: 10px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lgn-login-input:focus {
+  border-color: #2a5298;
+  box-shadow: 0 0 0 3px rgba(42,82,152,0.15);
+}
+
+.lgn-login-btn {
+  background: rgb(15, 5, 70);;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform .06s ease, box-shadow .2s;
+  margin-bottom: 1rem;;
+}
+
+.lgn-login-btn:hover { background: #2a5298; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.lgn-login-btn:active { transform: translateY(1px); }
+
+.lgn-login-actions { display:flex; align-items:center; justify-content: space-between; margin: 6px 0 8px; }
+.lgn-remember { display:flex; gap:8px; align-items:center; color:#52607a; font-size:0.9rem; }
+.lgn-forgot-link { color:rgb(15, 5, 70);; font-weight:600; text-decoration:none; font-size:0.9rem; }
+.lgn-forgot-link:hover { text-decoration: underline; }
+
+.lgn-login-hint { text-align:center; color:#6b7a97; margin-top: 14px; }
+.lgn-login-hint a { color:rgb(15, 5, 70);; font-weight:600; text-decoration:none; }
+.lgn-login-hint a:hover { text-decoration: underline; }
+
+
+
+.lgn-back1-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #dbe2ef;
+  background: rgb(255, 255, 255);
+  color:rgb(15, 5, 70);
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow .2s ease, transform .06s ease;
+}
+.lgn-back1-btn:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+.lgn-back1-btn:active { transform: translateY(1px); }
+.lgn-back1-icon { height: 18px; width: 18px; }
+
+
+@media (max-width: 420px) {
+  .lgn-login-card { padding: 20px; border-radius: 14px; }
+  .lgn-login-title { font-size: 1.5rem; }
+}

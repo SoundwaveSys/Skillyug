@@ -1,0 +1,335 @@
+/* Privacy Policy Page Styles */
+.privpol-privacy-wrap {
+  width: 100vw;
+  min-height: 100vh;
+  background: rgb(15, 5, 70);
+  position: relative;
+  font-family: 'Poppins', Arial, sans-serif;
+  overflow-x: hidden;
+  padding: 100px 0 50px;
+}
+
+.privpol-privacy-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Hero Section */
+.privpol-privacy-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.privpol-privacy-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  background: #cc4915;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+}
+
+.privpol-privacy-sub {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.5rem;
+}
+
+.privpol-privacy-date {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Introduction */
+.privpol-privacy-intro {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.8s ease-out;
+}
+
+.privpol-privacy-intro p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.8;
+  margin: 0;
+  text-align: center;
+}
+
+/* Privacy Cards */
+.privpol-privacy-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.privpol-privacy-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 2.5rem;
+  transition: all 0.3s ease;
+  animation: slideIn 0.8s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.privpol-privacy-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(99, 102, 241, 0.1),
+    transparent
+  );
+  transform: rotate(45deg);
+  animation: shine 3s infinite;
+}
+
+.privpol-privacy-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.privpol-card-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.privpol-privacy-card h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.privpol-privacy-card p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Contact Section */
+.privpol-privacy-contact-section {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 2.5rem;
+  text-align: center;
+  animation: slideIn 0.8s ease-out;
+}
+
+.privpol-privacy-contact-section h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.privpol-privacy-contact-section > p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1.5rem;
+}
+
+.privpol-contact-details {
+  margin-bottom: 2rem;
+}
+
+.privpol-contact-details p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0.5rem 0;
+}
+
+.privpol-contact-details strong {
+  color: #ffffff;
+}
+
+.privpol-btn {
+  padding: 1.2rem 2.5rem;
+  border: none;
+  border-radius: 20px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+.privpol-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.privpol-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.privpol-btn-primary {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: white;
+  margin-top: 1rem;
+}
+
+.privpol-btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes titleGlow {
+  0% {
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.5),
+                 0 0 40px rgba(168, 85, 247, 0.3);
+  }
+  100% {
+    text-shadow: 0 0 30px rgba(99, 102, 241, 0.8),
+                 0 0 60px rgba(168, 85, 247, 0.5),
+                 0 0 80px rgba(236, 72, 153, 0.3);
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .privpol-privacy-container {
+    padding: 1.5rem;
+  }
+  
+  .privpol-privacy-title {
+    font-size: 2.8rem;
+  }
+  
+  .privpol-privacy-cards {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .privpol-privacy-wrap {
+    padding: 80px 0 30px;
+  }
+  
+  .privpol-privacy-container {
+    padding: 1rem;
+  }
+  
+  .privpol-privacy-hero {
+    margin-bottom: 2rem;
+  }
+  
+  .privpol-privacy-title {
+    font-size: 2.2rem;
+  }
+  
+  .privpol-privacy-sub {
+    font-size: 1.1rem;
+  }
+  
+  .privpol-privacy-cards {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .privpol-privacy-card {
+    padding: 2rem;
+  }
+  
+  .privpol-privacy-intro,
+  .privpol-privacy-contact-section {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .privpol-privacy-title {
+    font-size: 1.8rem;
+  }
+  
+  .privpol-card-icon {
+    font-size: 2.5rem;
+  }
+  
+  .privpol-privacy-card {
+    padding: 1.5rem;
+  }
+  
+  .privpol-privacy-card h2 {
+    font-size: 1.3rem;
+  }
+  
+  .privpol-privacy-intro,
+  .privpol-privacy-contact-section {
+    padding: 1.5rem;
+  }
+  
+  .privpol-privacy-contact-section h2 {
+    font-size: 1.5rem;
+  }
+}
+
