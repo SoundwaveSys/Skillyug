@@ -217,4 +217,126 @@ export const listPaymentTransactions = async ({ limit = 100, offset = 0 } = {}) 
   return result.rows;
 };
 
+const mapStudentProfile = (row) => row ? ({
+  uid: row.firebase_user_id,
+  email: row.email,
+  fullName: row.full_name,
+  dateOfBirth: row.date_of_birth,
+  guardianName: row.guardian_name,
+  guardianEmail: row.guardian_email,
+  guardianPhone: row.guardian_phone,
+  isGuardianVerified: row.is_guardian_verified,
+  role: row.role,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at
+}) : null;
+
+export const initializeStudentProfiles = async () => {
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS student_profiles (
+      firebase_user_id TEXT PRIMARY KEY,
+      email TEXT NOT NULL DEFAULT '',
+      full_name TEXT NOT NULL DEFAULT '',
+      date_of_birth DATE,
+      guardian_name TEXT NOT NULL DEFAULT '',
+      guardian_email TEXT NOT NULL DEFAULT '',
+      guardian_phone TEXT NOT NULL DEFAULT '',
+      is_guardian_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      role TEXT NOT NULL DEFAULT 'student',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`
+  );
+};
+
+export const findStudentProfile = async (firebaseUserId) => {
+  const result = await pool.query(
+    `SELECT firebase_user_id, email, full_name, date_of_birth,
+            guardian_name, guardian_email, guardian_phone,
+            is_guardian_verified, role, created_at, updated_at
+       FROM student_profiles
+      WHERE firebase_user_id = $1
+      LIMIT 1`,
+    [firebaseUserId]
+  );
+  return mapStudentProfile(result.rows[0]);
+};
+
+export const upsertStudentProfile = async ({
+  firebaseUserId,
+  email = '',
+  fullName = '',
+  dateOfBirth = '',
+  guardianName = '',
+  guardianEmail = '',
+  guardianPhone = '',
+  isGuardianVerified = false,
+  role = 'student'
+}) => {
+  const result = await pool.query(
+    `INSERT INTO student_profiles (
+       firebase_user_id, email, full_name, date_of_birth,
+       guardian_name, guardian_email, guardian_phone,
+       is_guardian_verified, role
+     )
+     VALUES ($1, $2, $3, NULLIF($4, '')::date, $5, $6, $7, $8, $9)
+     ON CONFLICT (firebase_user_id) DO UPDATE SET
+       email = EXCLUDED.email,
+       full_name = EXCLUDED.full_name,
+       date_of_birth = EXCLUDED.date_of_birth,
+       guardian_name = EXCLUDED.guardian_name,
+       guardian_email = EXCLUDED.guardian_email,
+       guardian_phone = EXCLUDED.guardian_phone,
+       is_guardian_verified = EXCLUDED.is_guardian_verified,
+       role = EXCLUDED.role,
+       updated_at = now()
+     RETURNING firebase_user_id, email, full_name, date_of_birth,
+               guardian_name, guardian_email, guardian_phone,
+               is_guardian_verified, role, created_at, updated_at`,
+    [
+      firebaseUserId,
+      email,
+      fullName,
+      dateOfBirth,
+      guardianName,
+      guardianEmail,
+      guardianPhone,
+      Boolean(isGuardianVerified),
+      role
+    ]
+  );
+  return mapStudentProfile(result.rows[0]);
+};
+
+export const listStudentProfiles = async ({ limit = 25, offset = 0, search = '' } = {}) => {
+  const searchPattern = `%${search}%`;
+  const [profilesResult, countResult] = await Promise.all([
+    pool.query(
+      `SELECT firebase_user_id, email, full_name, date_of_birth,
+              guardian_name, guardian_email, guardian_phone,
+              is_guardian_verified, role, created_at, updated_at
+         FROM student_profiles
+        WHERE role = 'student'
+          AND ($3 = '' OR full_name ILIKE $4 OR email ILIKE $4
+               OR guardian_name ILIKE $4 OR guardian_email ILIKE $4)
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2`,
+      [limit, offset, search, searchPattern]
+    ),
+    pool.query(
+      `SELECT COUNT(*)::int AS total
+         FROM student_profiles
+        WHERE role = 'student'
+          AND ($1 = '' OR full_name ILIKE $2 OR email ILIKE $2
+               OR guardian_name ILIKE $2 OR guardian_email ILIKE $2)`,
+      [search, searchPattern]
+    )
+  ]);
+
+  return {
+    students: profilesResult.rows.map(mapStudentProfile),
+    total: countResult.rows[0]?.total || 0
+  };
+};
+
 export const closeDatabase = () => pool.end();
