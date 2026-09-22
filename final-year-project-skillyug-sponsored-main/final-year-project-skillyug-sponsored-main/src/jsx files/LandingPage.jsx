@@ -964,13 +964,13 @@ const LandingPage = () => {
                               <div className="lp-owner-note-card">
                                   <img
                                     className="lp-owner-avatar"
-                                     src={mandarImage}
-                                     alt="Mandar Patil, Co-Founder of PrepMark"
+                                    src={mandarImage}
+                                    alt="Mandar Patil, Co-Founder of PrepMark"
                                     onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = ownerFallback; }}
                                     loading="lazy"
                                   />
                                   <blockquote className="lp-owner-quote">"Every child can build a sharper mind with the right practice—one small win each day."</blockquote>
-                                  <p className="lp-owner-speech">Hi, I\'m the founder of PrepMark. We built this platform to make brain training engaging and effective for students. Try a few lessons, watch the progress reports, and you\'ll see confidence grow week by week. Keep learning—your future self will thank you.</p>
+                                  <p className="lp-owner-speech">Hi, I'm the Co-founder of PrepMark. We built this platform to make brain training engaging and effective for students. Try a few lessons, watch the progress reports, and you'll see confidence grow week by week. Keep learning—your future self will thank you.</p>
                                  
                                   <div className="lp-owner-meta">
                                       <div className="lp-owner-name">Mandar Patil</div>
