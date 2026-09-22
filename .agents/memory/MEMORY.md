@@ -1,1 +1,0 @@
-- [Firebase package firewall](firebase-package-firewall.md) — use scoped Firebase web packages; the umbrella package pulls transitive archives blocked by Replit security policy.
