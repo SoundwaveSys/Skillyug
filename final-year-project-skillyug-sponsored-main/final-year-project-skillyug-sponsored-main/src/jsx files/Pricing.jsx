@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
 import "../css files/Pricing.css";
 import ParticleBackground from "../components/StarBg";
 import Navbar from "../components/Navbar";
@@ -15,46 +16,35 @@ const _features = [
 
 const Pricing = () => {
   const navigate = useNavigate();
-  const [showQRModal, setShowQRModal] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
   const [paymentError, setPaymentError] = useState("");
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
   useEffect(() => {
-    let timer;
-    if (showQRModal && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [showQRModal, timeLeft]);
+    return onAuthStateChanged(auth, async (user) => {
+      const pendingOrderId = localStorage.getItem("pendingRazorpayOrder");
+      if (!user || !pendingOrderId) return;
 
-  useEffect(() => {
-    if (showQRModal) {
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-    } else {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-    }
-    return () => {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-    };
-  }, [showQRModal]);
+      try {
+        const response = await fetch(`/api/payment-status/${encodeURIComponent(pendingOrderId)}`, {
+          headers: { Authorization: `Bearer ${await user.getIdToken()}` }
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) return;
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+        if (result.payment.status === "paid") {
+          localStorage.removeItem("pendingRazorpayOrder");
+          navigate("/home");
+        } else if (["failed", "cancelled"].includes(result.payment.status)) {
+          localStorage.removeItem("pendingRazorpayOrder");
+          setPaymentError(result.payment.failureReason || "Your previous payment was not completed.");
+        } else {
+          setPaymentError("A previous payment is still pending. Complete it or wait before retrying.");
+        }
+      } catch {
+        setPaymentError("Unable to check the status of your previous payment.");
+      }
+    });
+  }, [navigate]);
 
   const loadRazorpay = () => new Promise((resolve, reject) => {
     if (window.Razorpay) {
@@ -70,7 +60,6 @@ const Pricing = () => {
   });
 
   const handleProceedToPayment = async () => {
-    setTimeLeft(300);
     setPaymentError("");
 
     const user = auth.currentUser;
@@ -96,6 +85,22 @@ const Pricing = () => {
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Unable to create a Razorpay order.");
       }
+      localStorage.setItem("pendingRazorpayOrder", result.order.id);
+
+      const reportPaymentState = async (status, failureReason = "") => {
+        try {
+          await fetch(`/api/payment-status/${encodeURIComponent(result.order.id)}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${await user.getIdToken()}`
+            },
+            body: JSON.stringify({ status, failureReason })
+          });
+        } catch {
+          // The persisted order can be reconciled on the next page load.
+        }
+      };
 
       const checkout = new window.Razorpay({
         key: result.keyId,
@@ -120,15 +125,21 @@ const Pricing = () => {
             const verificationResult = await verification.json();
             if (!verification.ok || !verificationResult.success) {
               setPaymentError(verificationResult.error || "Payment verification failed.");
+              setIsPaymentLoading(false);
               return;
             }
-            navigate("/create-account");
+            localStorage.removeItem("pendingRazorpayOrder");
+            setIsPaymentLoading(false);
+            navigate("/home");
           } catch {
+            setIsPaymentLoading(false);
             setPaymentError("Payment verification could not be completed. Please contact support before retrying.");
           }
         },
         modal: {
-          ondismiss: () => {
+          ondismiss: async () => {
+            await reportPaymentState("cancelled", "Checkout was closed before payment completed.");
+            localStorage.removeItem("pendingRazorpayOrder");
             setIsPaymentLoading(false);
             setPaymentError("Payment was cancelled. No access was granted.");
           }
@@ -136,26 +147,20 @@ const Pricing = () => {
         theme: { color: "#3521b5" }
       });
 
-      checkout.on("payment.failed", (failure) => {
+      checkout.on("payment.failed", async (failure) => {
+        await reportPaymentState(
+          "failed",
+          failure.error?.description || "Razorpay checkout reported a failed payment."
+        );
+        localStorage.removeItem("pendingRazorpayOrder");
         setPaymentError(failure.error?.description || "Payment failed. Please try again.");
         setIsPaymentLoading(false);
       });
       checkout.open();
     } catch (error) {
       setPaymentError(error.message || "Unable to start payment.");
-    } finally {
       setIsPaymentLoading(false);
     }
-  };
-
-  const handleCloseModal = () => {
-    setShowQRModal(false);
-    // Simulate payment verification - navigate to create account
-    navigate("/create-account");
-  };
-
-  const handleGenerateNewCode = () => {
-    setTimeLeft(300);
   };
 
   return (
@@ -442,28 +447,6 @@ const Pricing = () => {
       </div>
     </div>
     <Footer />
-    {showQRModal && (
-      <div className="price-qr-modal-overlay" onClick={handleCloseModal}>
-        <div className="price-qr-modal-content" onClick={(e) => e.stopPropagation()}>
-          <button className="price-qr-modal-close" onClick={handleCloseModal}>✕</button>
-          <h3 className="price-qr-modal-title">Scan Code for Payment</h3>
-          {paymentError && <p role="alert">{paymentError}</p>}
-          <div className="price-qr-code-container">
-            <img 
-              src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=merchant@upi&pn=SkillyugEducation&am=100&cu=INR" 
-              alt="Payment QR Code" 
-              className="price-qr-code-image"
-            />
-          </div>
-          <div className="price-qr-modal-footer">
-            <div className="price-qr-timer-small">Expires: {formatTime(timeLeft)}</div>
-            <button className="price-generate-new-code-btn-small" onClick={handleGenerateNewCode}>
-              New Code
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
     {isPaymentLoading && (
       <div className="price-qr-modal-overlay" role="status">
         <div className="price-qr-modal-content">

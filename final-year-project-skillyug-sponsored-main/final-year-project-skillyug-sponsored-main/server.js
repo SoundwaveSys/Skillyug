@@ -2,6 +2,12 @@ import express from 'express';
 import dotenv from 'dotenv';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import {
+  createPaymentRecord,
+  findPaymentByOrder,
+  findPaymentByPaymentId,
+  updatePaymentRecord
+} from './db.js';
 
 dotenv.config();
 
@@ -9,7 +15,6 @@ const app = express();
 const port = process.env.RAZORPAY_PORT || 3001;
 const PAYMENT_AMOUNT_PAISE = 10000;
 const PAYMENT_CURRENCY = 'INR';
-const processedPayments = new Set();
 
 app.use(express.json({ limit: '10kb' }));
 
@@ -111,6 +116,13 @@ app.post('/api/create-order', async (req, res) => {
       }
     });
 
+    await createPaymentRecord({
+      firebaseUserId: firebaseUser.uid,
+      razorpayOrderId: order.id,
+      amountPaise: order.amount,
+      currency: order.currency
+    });
+
     res.json({
       success: true,
       keyId: process.env.RAZORPAY_KEY_ID,
@@ -161,10 +173,32 @@ app.post('/api/verify-payment', async (req, res) => {
       });
     }
 
-    if (processedPayments.has(razorpay_payment_id)) {
-      return res.status(409).json({
+    const existingPayment = await findPaymentByPaymentId(razorpay_payment_id);
+    if (existingPayment) {
+      const isSamePayment =
+        existingPayment.firebase_user_id === firebaseUser.uid &&
+        existingPayment.razorpay_order_id === razorpay_order_id;
+      if (!isSamePayment) {
+        return res.status(409).json({
+          success: false,
+          error: 'This payment ID is already associated with another order.'
+        });
+      }
+      if (existingPayment.status === 'paid') {
+        return res.json({
+          success: true,
+          idempotent: true,
+          message: 'Payment was already verified.',
+          payment: existingPayment
+        });
+      }
+    }
+
+    const paymentRecord = await findPaymentByOrder(razorpay_order_id, firebaseUser.uid);
+    if (!paymentRecord) {
+      return res.status(404).json({
         success: false,
-        error: 'This payment has already been processed.'
+        error: 'No matching payment order was found.'
       });
     }
 
@@ -172,7 +206,9 @@ app.post('/api/verify-payment', async (req, res) => {
     if (
       order.amount !== PAYMENT_AMOUNT_PAISE ||
       order.currency !== PAYMENT_CURRENCY ||
-      order.notes?.firebase_uid !== firebaseUser.uid
+      order.notes?.firebase_uid !== firebaseUser.uid ||
+      paymentRecord.amount_paise !== PAYMENT_AMOUNT_PAISE ||
+      paymentRecord.currency !== PAYMENT_CURRENCY
     ) {
       return res.status(400).json({
         success: false,
@@ -189,6 +225,14 @@ app.post('/api/verify-payment', async (req, res) => {
     }
 
     if (payment.status === 'failed') {
+      await updatePaymentRecord({
+        razorpayOrderId: razorpay_order_id,
+        firebaseUserId: firebaseUser.uid,
+        razorpayPaymentId: razorpay_payment_id,
+        status: 'failed',
+        paymentMethod: payment.method || null,
+        failureReason: payment.error_description || 'Razorpay reported payment failure'
+      });
       return res.status(402).json({
         success: false,
         error: 'Razorpay reported that this payment failed.'
@@ -196,6 +240,13 @@ app.post('/api/verify-payment', async (req, res) => {
     }
 
     if (!['authorized', 'captured'].includes(payment.status)) {
+      await updatePaymentRecord({
+        razorpayOrderId: razorpay_order_id,
+        firebaseUserId: firebaseUser.uid,
+        razorpayPaymentId: razorpay_payment_id,
+        status: 'pending',
+        paymentMethod: payment.method || null
+      });
       return res.status(202).json({
         success: false,
         pending: true,
@@ -203,7 +254,18 @@ app.post('/api/verify-payment', async (req, res) => {
       });
     }
 
-    processedPayments.add(razorpay_payment_id);
+    const savedPayment = await updatePaymentRecord({
+      razorpayOrderId: razorpay_order_id,
+      firebaseUserId: firebaseUser.uid,
+      razorpayPaymentId: razorpay_payment_id,
+      status: payment.status === 'captured' ? 'paid' : 'authorized',
+      paymentMethod: payment.method || null,
+      metadata: {
+        razorpayOrderStatus: order.status,
+        verifiedAt: new Date().toISOString()
+      }
+    });
+
     res.json({
       success: true,
       message: 'Payment verified successfully',
@@ -213,7 +275,7 @@ app.post('/api/verify-payment', async (req, res) => {
         razorpay_signature,
         amount: order.amount,
         currency: order.currency,
-        status: payment.status,
+        status: savedPayment.status,
         userId: firebaseUser.uid
       }
     });
@@ -222,6 +284,84 @@ app.post('/api/verify-payment', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Payment verification failed. Please try again.'
+    });
+  }
+});
+
+app.get('/api/payment-status/:orderId', async (req, res) => {
+  try {
+    const firebaseUser = await authenticateFirebaseUser(req, res);
+    if (!firebaseUser) return;
+
+    const payment = await findPaymentByOrder(req.params.orderId, firebaseUser.uid);
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Payment order was not found.'
+      });
+    }
+
+    res.json({
+      success: true,
+      payment: {
+        orderId: payment.razorpay_order_id,
+        paymentId: payment.razorpay_payment_id,
+        amount: payment.amount_paise,
+        currency: payment.currency,
+        status: payment.status,
+        failureReason: payment.failure_reason,
+        updatedAt: payment.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('Payment status error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Unable to retrieve payment status.'
+    });
+  }
+});
+
+app.patch('/api/payment-status/:orderId', async (req, res) => {
+  try {
+    const firebaseUser = await authenticateFirebaseUser(req, res);
+    if (!firebaseUser) return;
+
+    const status = req.body.status;
+    if (!['failed', 'cancelled'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Only failed or cancelled client states can be reported.'
+      });
+    }
+
+    const existingPayment = await findPaymentByOrder(req.params.orderId, firebaseUser.uid);
+    if (!existingPayment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Payment order was not found.'
+      });
+    }
+    if (['paid', 'authorized'].includes(existingPayment.status)) {
+      return res.status(409).json({
+        success: false,
+        error: 'A successful payment cannot be changed by the client.'
+      });
+    }
+
+    const payment = await updatePaymentRecord({
+      razorpayOrderId: req.params.orderId,
+      firebaseUserId: firebaseUser.uid,
+      status,
+      failureReason: String(req.body.failureReason || '').slice(0, 500) || null
+    });
+
+    res.json({ success: true, status: payment.status });
+  } catch (error) {
+    console.error('Payment status update error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Unable to update payment status.'
     });
   }
 });

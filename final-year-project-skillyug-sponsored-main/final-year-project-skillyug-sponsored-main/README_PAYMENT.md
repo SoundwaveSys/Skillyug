@@ -9,10 +9,10 @@ npm install
 Create a `.env` file in the project root with:
 
 ```env
-VITE_RAZORPAY_KEY_ID=your_key_id
-RAZORPAY_KEY_ID=your_key_id
-RAZORPAY_KEY_SECRET=your_key_secret
-PORT=5000
+RAZORPAY_KEY_ID=rzp_test_your_key_id
+RAZORPAY_KEY_SECRET=your_test_key_secret
+RAZORPAY_PORT=3001
+DATABASE_URL=provided_by_replit
 ```
 
 ## 3) Start the backend
@@ -26,11 +26,14 @@ npm run dev
 ## 5) Use Razorpay flow
 
 - Open the Pricing page
+- Sign in with Firebase
 - Click "Proceed to Payment"
-- If the frontend key is configured, the app will open Razorpay checkout
-- Payment success triggers verification against the backend
+- The authenticated backend creates a fixed ₹100 Test Mode order
+- Payment success triggers signature, order, and payment verification
+- Verified payment status is persisted in the Replit development database
 
 ## Notes
 
-- The QR payment modal remains as a fallback for demo/testing when no Razorpay key is set.
-- For production, use a real Razorpay key and backend verification endpoint.
+- The frontend receives the public Razorpay Key ID from the create-order response; the Key Secret remains server-side.
+- The old demo QR fallback was removed because it bypassed Razorpay verification.
+- Test Mode remains enabled while the Key ID starts with `rzp_test_`.
