@@ -135,7 +135,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginAdmin } from "../firebase/auth";
+import { loginAdmin, resetPassword } from "../firebase/auth";
 import "../css files/AdminLogin.css";
 import ParticleBackground from "../components/StarBg";
 import Footer from "../components/Footer";
@@ -143,7 +143,6 @@ import Footer from "../components/Footer";
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [authKey, setAuthKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -154,7 +153,7 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const result = await loginAdmin(email, password, authKey);
+      const result = await loginAdmin(email, password);
       
       if (result.success) {
         // Admin login successful - navigate to admin home
@@ -174,6 +173,18 @@ const AdminLogin = () => {
   const handleUserLogin = () => {
     // Navigate to admin login page
     navigate("/login");
+  };
+
+  const handlePasswordReset = async () => {
+    setError("");
+    if (!email) {
+      setError("Enter the admin email address first.");
+      return;
+    }
+    const result = await resetPassword(email);
+    setError(result.success
+      ? "Password reset email sent. Check the admin inbox."
+      : result.error);
   };
 
   return (
@@ -236,20 +247,15 @@ const AdminLogin = () => {
             disabled={loading}
           />
 
-          <label className="adlgn-admin-login-label" htmlFor="authkey">Authentication Key</label>
-          <input
-            id="authkey"
-            type="password"
-            placeholder="Enter admin key"
-            value={authKey}
-            onChange={(e) => setAuthKey(e.target.value)}
-            className="adlgn-admin-login-input"
-            required
-            disabled={loading}
-          />
-
           <div className="adlgn-admin-login-actions">
-            <a href="#" className="adlgn-admin-forgot-link">Forgot password?</a>
+            <button
+              type="button"
+              className="adlgn-admin-forgot-link"
+              onClick={handlePasswordReset}
+              disabled={loading}
+            >
+              Forgot password?
+            </button>
           </div>
 
           <button type="submit" className="adlgn-admin-login-btn" disabled={loading}>

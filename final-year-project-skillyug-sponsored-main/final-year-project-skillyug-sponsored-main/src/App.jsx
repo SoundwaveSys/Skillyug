@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Routes, Route, useLocation } from 'react-router-dom';
 
 import LandingPage from "./jsx files/LandingPage";
 import Pricing from "./jsx files/Pricing";
@@ -32,11 +32,20 @@ import ContactUs from "./components/Footer Pages/ContactUs";
 import PrivacyPolicy from "./components/Footer Pages/PrivacyPolicy";
 import Terms from "./components/Footer Pages/Terms";
 import Refund from "./components/Footer Pages/Refund";
+import { useAuth } from './contexts/AuthContext';
 
 import Exam from './jsx files/Exam';
 import ExamTest from './jsx files/ExamTest';
 import ExamResults from './jsx files/ExamResults';
 import ExamHistory from './jsx files/ExamHistory';
+
+function AdminRoute({ children }) {
+  const { loading, isAuthenticated, isAdmin } = useAuth();
+  if (loading) return <Loader />;
+  if (!isAuthenticated) return <Navigate to="/admin-login" replace />;
+  if (!isAdmin) return <Navigate to="/home" replace />;
+  return children;
+}
 
 function AppRoutes() {
   const location = useLocation();
@@ -72,7 +81,7 @@ function AppRoutes() {
         <Route path="/practice-logs" element={<PracticeLogs />} />
         <Route path="/learning" element={<Learning />} />
         <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin-home" element={<AdminHome />} />
+        <Route path="/admin-home" element={<AdminRoute><AdminHome /></AdminRoute>} />
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/contact-us" element={<ContactUs />} />
         

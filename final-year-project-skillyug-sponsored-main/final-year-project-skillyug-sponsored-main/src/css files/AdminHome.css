@@ -4,3 +4,107 @@
   width: 100vw;
   font-family: 'Inter', sans-serif;
 }
+
+.admin-content {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 48px 0 80px;
+  color: white;
+}
+
+.admin-payments-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-payments-header h1 {
+  margin: 4px 0 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.admin-eyebrow {
+  margin: 0;
+  color: #8fe3cf;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.admin-payment-count,
+.admin-state {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.admin-error {
+  color: #ffd7d7;
+  border-color: rgba(255, 110, 110, 0.5);
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.admin-payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.admin-payments-table th,
+.admin-payments-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  vertical-align: top;
+}
+
+.admin-payments-table th {
+  color: #b8b2e7;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.admin-payments-table td {
+  font-size: 0.9rem;
+}
+
+.admin-payments-table small {
+  display: block;
+  color: #b8b2e7;
+  margin-top: 4px;
+  max-width: 220px;
+  overflow-wrap: anywhere;
+}
+
+.admin-status {
+  display: inline-flex;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  text-transform: capitalize;
+  font-weight: 700;
+}
+
+.admin-status-paid { background: #176b50; }
+.admin-status-authorized,
+.admin-status-pending { background: #806213; }
+.admin-status-failed,
+.admin-status-cancelled { background: #8b2b3b; }
+.admin-status-refunded { background: #365b9c; }
+
+@media (max-width: 640px) {
+  .admin-payments-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

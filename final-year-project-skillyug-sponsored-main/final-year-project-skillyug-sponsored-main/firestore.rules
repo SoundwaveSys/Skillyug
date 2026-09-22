@@ -50,7 +50,8 @@ service cloud.firestore {
       // Users can create their own profile during signup
       allow create: if isAuthenticated() && 
                       request.auth.uid == userId &&
-                      request.resource.data.email == request.auth.token.email;
+                      request.resource.data.email == request.auth.token.email &&
+                      request.resource.data.role == 'student';
       
       // Users can update their own profile
       // Admins can update any profile

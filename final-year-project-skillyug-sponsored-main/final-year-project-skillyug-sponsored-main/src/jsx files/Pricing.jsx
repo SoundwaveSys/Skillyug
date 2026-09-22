@@ -20,30 +20,50 @@ const Pricing = () => {
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (user) => {
+    let pollTimer;
+    let stopped = false;
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       const pendingOrderId = localStorage.getItem("pendingRazorpayOrder");
       if (!user || !pendingOrderId) return;
 
-      try {
-        const response = await fetch(`/api/payment-status/${encodeURIComponent(pendingOrderId)}`, {
-          headers: { Authorization: `Bearer ${await user.getIdToken()}` }
-        });
-        const result = await response.json();
-        if (!response.ok || !result.success) return;
+      const checkPaymentStatus = async () => {
+        try {
+          const response = await fetch(`/api/payment-status/${encodeURIComponent(pendingOrderId)}`, {
+            headers: { Authorization: `Bearer ${await user.getIdToken()}` }
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success || stopped) return;
 
-        if (result.payment.status === "paid") {
-          localStorage.removeItem("pendingRazorpayOrder");
-          navigate("/home");
-        } else if (["failed", "cancelled"].includes(result.payment.status)) {
-          localStorage.removeItem("pendingRazorpayOrder");
-          setPaymentError(result.payment.failureReason || "Your previous payment was not completed.");
-        } else {
-          setPaymentError("A previous payment is still pending. Complete it or wait before retrying.");
+          if (result.payment.status === "paid") {
+            localStorage.removeItem("pendingRazorpayOrder");
+            clearInterval(pollTimer);
+            navigate("/home");
+          } else if (["failed", "cancelled", "refunded"].includes(result.payment.status)) {
+            localStorage.removeItem("pendingRazorpayOrder");
+            clearInterval(pollTimer);
+            setPaymentError(result.payment.failureReason || "Your previous payment was not completed.");
+          } else {
+            setPaymentError("A previous payment is still pending. Its status will update automatically.");
+          }
+        } catch {
+          if (!stopped) {
+            setPaymentError("Unable to check the status of your previous payment.");
+          }
         }
-      } catch {
-        setPaymentError("Unable to check the status of your previous payment.");
+      };
+
+      await checkPaymentStatus();
+      if (!stopped && localStorage.getItem("pendingRazorpayOrder")) {
+        pollTimer = setInterval(checkPaymentStatus, 5000);
       }
     });
+
+    return () => {
+      stopped = true;
+      clearInterval(pollTimer);
+      unsubscribe();
+    };
   }, [navigate]);
 
   const loadRazorpay = () => new Promise((resolve, reject) => {

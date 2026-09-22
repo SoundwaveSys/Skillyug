@@ -14,16 +14,17 @@ const pool = new Pool({
 
 export const createPaymentRecord = async ({
   firebaseUserId,
+  userEmail,
   razorpayOrderId,
   amountPaise,
   currency
 }) => {
   const result = await pool.query(
     `INSERT INTO payment_transactions
-      (firebase_user_id, razorpay_order_id, amount_paise, currency, status)
-     VALUES ($1, $2, $3, $4, 'created')
+      (firebase_user_id, user_email, razorpay_order_id, amount_paise, currency, status)
+     VALUES ($1, $2, $3, $4, $5, 'created')
      RETURNING id, razorpay_order_id, status, created_at`,
-    [firebaseUserId, razorpayOrderId, amountPaise, currency]
+    [firebaseUserId, userEmail, razorpayOrderId, amountPaise, currency]
   );
   return result.rows[0];
 };
@@ -86,6 +87,111 @@ export const updatePaymentRecord = async ({
     ]
   );
   return result.rows[0] || null;
+};
+
+export const processRazorpayWebhook = async ({
+  eventId,
+  eventType,
+  payloadHash,
+  razorpayOrderId,
+  razorpayPaymentId,
+  status,
+  paymentMethod = null,
+  failureReason = null,
+  metadata = {}
+}) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const eventInsert = await client.query(
+      `INSERT INTO razorpay_webhook_events
+        (event_id, event_type, payload_hash, razorpay_order_id, razorpay_payment_id)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (event_id) DO NOTHING
+       RETURNING event_id`,
+      [eventId, eventType, payloadHash, razorpayOrderId, razorpayPaymentId]
+    );
+
+    if (eventInsert.rowCount === 0) {
+      await client.query('COMMIT');
+      return { duplicate: true, payment: null };
+    }
+
+    const paymentResult = await client.query(
+      `SELECT id, firebase_user_id, user_email, razorpay_order_id,
+              razorpay_payment_id, amount_paise, currency, status
+         FROM payment_transactions
+        WHERE ($1::text IS NOT NULL AND razorpay_order_id = $1)
+           OR ($2::text IS NOT NULL AND razorpay_payment_id = $2)
+        ORDER BY CASE WHEN razorpay_order_id = $1 THEN 0 ELSE 1 END
+        LIMIT 1
+        FOR UPDATE`,
+      [razorpayOrderId, razorpayPaymentId]
+    );
+
+    if (paymentResult.rowCount === 0) {
+      const error = new Error('Webhook payment record was not found.');
+      error.code = 'PAYMENT_NOT_FOUND';
+      throw error;
+    }
+
+    const current = paymentResult.rows[0];
+    let nextStatus = status;
+    if (
+      current.status === 'refunded' ||
+      (current.status === 'paid' && status !== 'refunded') ||
+      (current.status === 'authorized' && ['failed', 'cancelled'].includes(status))
+    ) {
+      nextStatus = current.status;
+    }
+
+    const updated = await client.query(
+      `UPDATE payment_transactions
+          SET razorpay_payment_id = COALESCE($2, razorpay_payment_id),
+              status = $3,
+              payment_method = COALESCE($4, payment_method),
+              failure_reason = $5,
+              metadata = metadata || $6::jsonb,
+              updated_at = now()
+        WHERE id = $1
+        RETURNING id, firebase_user_id, user_email, razorpay_order_id,
+                  razorpay_payment_id, amount_paise, currency, status,
+                  payment_method, failure_reason, created_at, updated_at`,
+      [
+        current.id,
+        razorpayPaymentId,
+        nextStatus,
+        paymentMethod,
+        failureReason,
+        JSON.stringify({
+          ...metadata,
+          lastWebhookEvent: eventType,
+          lastWebhookEventId: eventId
+        })
+      ]
+    );
+
+    await client.query('COMMIT');
+    return { duplicate: false, payment: updated.rows[0] };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+export const listPaymentTransactions = async ({ limit = 100, offset = 0 } = {}) => {
+  const result = await pool.query(
+    `SELECT id, firebase_user_id, user_email, razorpay_order_id,
+            razorpay_payment_id, amount_paise, currency, status,
+            payment_method, failure_reason, created_at, updated_at
+       FROM payment_transactions
+      ORDER BY created_at DESC
+      LIMIT $1 OFFSET $2`,
+    [limit, offset]
+  );
+  return result.rows;
 };
 
 export const closeDatabase = () => pool.end();

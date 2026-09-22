@@ -1,12 +1,17 @@
 import React, { useState } from "react";
 import "./AdminNavbar.css";
 import { Link } from "react-router-dom";
+import { logout } from "../firebase/auth";
 
 const AdminNavbar = () => {
 	const [open, setOpen] = useState(false);
 
 	const toggle = () => setOpen((s) => !s);
 	const close = () => setOpen(false);
+	const handleLogout = async () => {
+		close();
+		await logout();
+	};
 
 	return (
 		<nav className="admin-navbar">
@@ -33,7 +38,7 @@ const AdminNavbar = () => {
 				<li><Link to="/practice" onClick={close}>Discussions</Link></li>
 				<li><Link to="/learning" onClick={close}>Analytics</Link></li>
 				<li><Link to="/profile" onClick={close}>Add Tests</Link></li>
-				<li><Link to="/" className="nav-link" onClick={close}>Log Out</Link></li>
+				<li><Link to="/" className="nav-link" onClick={handleLogout}>Log Out</Link></li>
 			</ul>
 		</nav>
 	);

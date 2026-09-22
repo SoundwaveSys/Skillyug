@@ -619,26 +619,15 @@ export const onAuthChange = (callback) => {
 // ==================== ADMIN AUTHENTICATION ====================
 
 /**
- * Admin login with email, password, and authentication key
+ * Admin login with Firebase email and password
  * Verifies user is an admin before allowing access
  * 
  * @param {string} email - Admin email address
  * @param {string} password - Admin password
- * @param {string} authKey - Admin authentication key (from .env)
  * @returns {Promise<Object>} - Admin user object and success status
  */
-export const loginAdmin = async (email, password, authKey) => {
+export const loginAdmin = async (email, password) => {
   try {
-    // Verify auth key
-    const validAuthKey = import.meta.env.VITE_ADMIN_AUTH_KEY || 'admin@2024';
-    
-    if (authKey !== validAuthKey) {
-      return {
-        success: false,
-        error: 'Invalid authentication key. Access denied.'
-      };
-    }
-    
     // Attempt login
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;

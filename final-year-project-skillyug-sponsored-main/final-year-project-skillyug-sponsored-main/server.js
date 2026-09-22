@@ -6,7 +6,9 @@ import {
   createPaymentRecord,
   findPaymentByOrder,
   findPaymentByPaymentId,
-  updatePaymentRecord
+  updatePaymentRecord,
+  processRazorpayWebhook,
+  listPaymentTransactions
 } from './db.js';
 
 dotenv.config();
@@ -15,8 +17,6 @@ const app = express();
 const port = process.env.RAZORPAY_PORT || 3001;
 const PAYMENT_AMOUNT_PAISE = 10000;
 const PAYMENT_CURRENCY = 'INR';
-
-app.use(express.json({ limit: '10kb' }));
 
 const getRazorpay = () => {
   if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -69,7 +69,8 @@ const authenticateFirebaseUser = async (req, res) => {
 
     return {
       uid: firebaseUser.localId,
-      email: firebaseUser.email || null
+      email: firebaseUser.email || null,
+      idToken
     };
   } catch (error) {
     console.error('Firebase session validation failed:', error.message);
@@ -87,6 +88,123 @@ const safeSignatureMatch = (expected, received) => {
   return expectedBuffer.length === receivedBuffer.length &&
     crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
 };
+
+const authenticateAdmin = async (req, res) => {
+  const firebaseUser = await authenticateFirebaseUser(req, res);
+  if (!firebaseUser) return null;
+
+  const projectId = process.env.VITE_FIREBASE_PROJECT_ID;
+  if (!projectId) {
+    res.status(503).json({ success: false, error: 'Firebase project configuration is missing.' });
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/users/${encodeURIComponent(firebaseUser.uid)}`,
+      { headers: { Authorization: `Bearer ${firebaseUser.idToken}` } }
+    );
+    const profile = await response.json();
+    if (!response.ok || profile.fields?.role?.stringValue !== 'admin') {
+      res.status(403).json({ success: false, error: 'Administrator access is required.' });
+      return null;
+    }
+    return firebaseUser;
+  } catch (error) {
+    console.error('Admin authorization failed:', error.message);
+    res.status(503).json({ success: false, error: 'Unable to authorize administrator.' });
+    return null;
+  }
+};
+
+const webhookStatusByEvent = {
+  'payment.authorized': 'authorized',
+  'payment.captured': 'paid',
+  'order.paid': 'paid',
+  'payment.failed': 'failed',
+  'payment.refunded': 'refunded',
+  'refund.processed': 'refunded'
+};
+
+app.post(
+  '/api/webhooks/razorpay',
+  express.raw({ type: 'application/json', limit: '100kb' }),
+  async (req, res) => {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.get('x-razorpay-signature') || '';
+    const eventId = req.get('x-razorpay-event-id') || '';
+
+    if (!webhookSecret) {
+      return res.status(503).json({ success: false, error: 'Webhook processing is not configured.' });
+    }
+    if (!signature || !eventId || !Buffer.isBuffer(req.body)) {
+      return res.status(400).json({ success: false, error: 'Missing webhook verification data.' });
+    }
+
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(req.body)
+      .digest('hex');
+    if (!safeSignatureMatch(expectedSignature, signature)) {
+      return res.status(400).json({ success: false, error: 'Invalid webhook signature.' });
+    }
+
+    let event;
+    try {
+      event = JSON.parse(req.body.toString('utf8'));
+    } catch {
+      return res.status(400).json({ success: false, error: 'Invalid webhook payload.' });
+    }
+
+    const status = webhookStatusByEvent[event.event];
+    if (!status) {
+      return res.json({ success: true, ignored: true });
+    }
+
+    const paymentEntity = event.payload?.payment?.entity || null;
+    const orderEntity = event.payload?.order?.entity || null;
+    const refundEntity = event.payload?.refund?.entity || null;
+    const razorpayPaymentId = paymentEntity?.id || refundEntity?.payment_id || null;
+    const razorpayOrderId = paymentEntity?.order_id || orderEntity?.id || null;
+
+    if (!razorpayOrderId && !razorpayPaymentId) {
+      return res.status(400).json({ success: false, error: 'Webhook has no payment identifier.' });
+    }
+
+    try {
+      const result = await processRazorpayWebhook({
+        eventId,
+        eventType: event.event,
+        payloadHash: crypto.createHash('sha256').update(req.body).digest('hex'),
+        razorpayOrderId,
+        razorpayPaymentId,
+        status,
+        paymentMethod: paymentEntity?.method || null,
+        failureReason: paymentEntity?.error_description || null,
+        metadata: {
+          razorpayCreatedAt: paymentEntity?.created_at || refundEntity?.created_at || null,
+          refundId: refundEntity?.id || null
+        }
+      });
+      return res.json({
+        success: true,
+        duplicate: result.duplicate,
+        status: result.payment?.status || null
+      });
+    } catch (error) {
+      if (error.code === 'PAYMENT_NOT_FOUND') {
+        return res.status(503).json({
+          success: false,
+          error: 'Payment record is not ready; webhook should be retried.'
+        });
+      }
+      console.error('Razorpay webhook error:', error.message);
+      return res.status(500).json({ success: false, error: 'Webhook processing failed.' });
+    }
+  }
+);
+
+app.use(express.json({ limit: '10kb' }));
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Razorpay server is running' });
@@ -118,6 +236,7 @@ app.post('/api/create-order', async (req, res) => {
 
     await createPaymentRecord({
       firebaseUserId: firebaseUser.uid,
+      userEmail: firebaseUser.email,
       razorpayOrderId: order.id,
       amountPaise: order.amount,
       currency: order.currency
@@ -293,12 +412,42 @@ app.get('/api/payment-status/:orderId', async (req, res) => {
     const firebaseUser = await authenticateFirebaseUser(req, res);
     if (!firebaseUser) return;
 
-    const payment = await findPaymentByOrder(req.params.orderId, firebaseUser.uid);
+    let payment = await findPaymentByOrder(req.params.orderId, firebaseUser.uid);
     if (!payment) {
       return res.status(404).json({
         success: false,
         error: 'Payment order was not found.'
       });
+    }
+
+    if (!['paid', 'refunded'].includes(payment.status)) {
+      const razorpay = getRazorpay();
+      if (razorpay) {
+        const orderPayments = await razorpay.orders.fetchPayments(payment.razorpay_order_id);
+        const remotePayments = orderPayments.items || [];
+        const remotePayment =
+          remotePayments.find((item) => item.status === 'captured') ||
+          remotePayments.find((item) => item.status === 'authorized') ||
+          remotePayments.find((item) => item.status === 'failed');
+
+        if (remotePayment) {
+          const reconciledStatus = remotePayment.status === 'captured'
+            ? 'paid'
+            : remotePayment.status;
+          payment = await updatePaymentRecord({
+            razorpayOrderId: payment.razorpay_order_id,
+            firebaseUserId: firebaseUser.uid,
+            razorpayPaymentId: remotePayment.id,
+            status: reconciledStatus,
+            paymentMethod: remotePayment.method || null,
+            failureReason: remotePayment.error_description || null,
+            metadata: {
+              reconciledAt: new Date().toISOString(),
+              reconciliationSource: 'status-endpoint'
+            }
+          });
+        }
+      }
     }
 
     res.json({
@@ -363,6 +512,23 @@ app.patch('/api/payment-status/:orderId', async (req, res) => {
       success: false,
       error: 'Unable to update payment status.'
     });
+  }
+});
+
+app.get('/api/admin/payments', async (req, res) => {
+  try {
+    const admin = await authenticateAdmin(req, res);
+    if (!admin) return;
+
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 250)
+      : 100;
+    const payments = await listPaymentTransactions({ limit });
+    res.json({ success: true, payments });
+  } catch (error) {
+    console.error('Admin payments error:', error.message);
+    res.status(500).json({ success: false, error: 'Unable to load payment transactions.' });
   }
 });
 
