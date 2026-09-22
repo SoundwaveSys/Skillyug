@@ -18,4 +18,6 @@ Vite listens on `0.0.0.0:5000` so the app is available in Replit Preview.
 
 - Firebase configuration is read from the ignored `.env` file in the app directory.
 - The Razorpay API runs on port 3001 and is proxied through Vite at `/api`.
-- Live Razorpay payments require test credentials in the environment: `VITE_RAZORPAY_KEY_ID`, `RAZORPAY_KEY_ID`, and `RAZORPAY_KEY_SECRET`.
+- The payment API reads `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` from the server environment. The frontend receives only the public Key ID from the authenticated order response.
+- Payment attempts require a valid Firebase Auth ID token. The server fixes the plan amount at ₹100 (10,000 paise), validates the Razorpay order and payment, and rejects duplicate payment IDs.
+- Payment records are not persisted because this app currently has no server-side database or Firebase Admin service. The current UI does not grant durable premium access after payment; adding durable entitlement storage requires a separate authenticated persistence design.

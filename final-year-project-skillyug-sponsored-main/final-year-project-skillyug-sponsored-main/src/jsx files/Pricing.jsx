@@ -4,6 +4,7 @@ import "../css files/Pricing.css";
 import ParticleBackground from "../components/StarBg";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { auth } from "../firebase/config";
 
 const _features = [
   "Interactive games for fun learning",
@@ -72,19 +73,23 @@ const Pricing = () => {
     setTimeLeft(300);
     setPaymentError("");
 
-    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-    if (!razorpayKey) {
-      setShowQRModal(true);
+    const user = auth.currentUser;
+    if (!user) {
+      setPaymentError("Please sign in before starting a payment.");
       return;
     }
 
     setIsPaymentLoading(true);
     try {
+      const idToken = await user.getIdToken();
       await loadRazorpay();
       const response = await fetch("/api/create-order", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: 10000, currency: "INR" })
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`
+        },
+        body: JSON.stringify({})
       });
       const result = await response.json();
 
@@ -93,27 +98,40 @@ const Pricing = () => {
       }
 
       const checkout = new window.Razorpay({
-        key: razorpayKey,
+        key: result.keyId,
         amount: result.order.amount,
         currency: result.order.currency,
         name: "PrepMark",
         description: "PrepMark Premium membership",
         order_id: result.order.id,
+        prefill: {
+          email: user.email || ""
+        },
         handler: async (paymentResponse) => {
-          const verification = await fetch("/api/verify-payment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(paymentResponse)
-          });
-          const verificationResult = await verification.json();
-          if (!verification.ok || !verificationResult.success) {
-            setPaymentError(verificationResult.error || "Payment verification failed.");
-            return;
+          try {
+            const verification = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${await user.getIdToken()}`
+              },
+              body: JSON.stringify(paymentResponse)
+            });
+            const verificationResult = await verification.json();
+            if (!verification.ok || !verificationResult.success) {
+              setPaymentError(verificationResult.error || "Payment verification failed.");
+              return;
+            }
+            navigate("/create-account");
+          } catch {
+            setPaymentError("Payment verification could not be completed. Please contact support before retrying.");
           }
-          navigate("/create-account");
         },
         modal: {
-          ondismiss: () => setIsPaymentLoading(false)
+          ondismiss: () => {
+            setIsPaymentLoading(false);
+            setPaymentError("Payment was cancelled. No access was granted.");
+          }
         },
         theme: { color: "#3521b5" }
       });
@@ -169,7 +187,16 @@ const Pricing = () => {
                   <img src="/assets/paytmlogo.png" alt="Paytm" />
                 </div>
               </div>
-              <button className="price-payment-button" onClick={handleProceedToPayment}>Proceed to Payment</button>
+              <button
+                className="price-payment-button"
+                onClick={handleProceedToPayment}
+                disabled={isPaymentLoading}
+              >
+                {isPaymentLoading ? "Starting payment…" : "Proceed to Payment"}
+              </button>
+              {paymentError && (
+                <p className="price-payment-error" role="alert">{paymentError}</p>
+              )}
             </div>
           </div>
       </div>
