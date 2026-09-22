@@ -7,15 +7,21 @@ import crypto from 'crypto';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.RAZORPAY_PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+const getRazorpay = () => {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    return null;
+  }
+
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+  });
+};
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Razorpay server is running' });
@@ -25,7 +31,8 @@ app.post('/api/create-order', async (req, res) => {
   try {
     const { amount, currency = 'INR', receipt = 'prepmark-payment' } = req.body;
 
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    const razorpay = getRazorpay();
+    if (!razorpay) {
       return res.status(500).json({
         success: false,
         error: 'Razorpay keys are not configured. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your environment.'
@@ -63,6 +70,13 @@ app.post('/api/verify-payment', (req, res) => {
       });
     }
 
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      return res.status(500).json({
+        success: false,
+        error: 'Razorpay secret is not configured on the server.'
+      });
+    }
+
     const generatedSignature = crypto
       .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -96,5 +110,5 @@ app.post('/api/verify-payment', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Razorpay server running on http://localhost:${port}`);
+  console.log(`Razorpay server running on port ${port}`);
 });

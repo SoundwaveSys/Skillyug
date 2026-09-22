@@ -16,6 +16,8 @@ const Pricing = () => {
   const navigate = useNavigate();
   const [showQRModal, setShowQRModal] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+  const [paymentError, setPaymentError] = useState("");
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
   useEffect(() => {
     let timer;
@@ -53,9 +55,79 @@ const Pricing = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleProceedToPayment = () => {
+  const loadRazorpay = () => new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => reject(new Error("Razorpay checkout could not be loaded."));
+    document.body.appendChild(script);
+  });
+
+  const handleProceedToPayment = async () => {
     setTimeLeft(300);
-    setShowQRModal(true);
+    setPaymentError("");
+
+    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    if (!razorpayKey) {
+      setShowQRModal(true);
+      return;
+    }
+
+    setIsPaymentLoading(true);
+    try {
+      await loadRazorpay();
+      const response = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 10000, currency: "INR" })
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Unable to create a Razorpay order.");
+      }
+
+      const checkout = new window.Razorpay({
+        key: razorpayKey,
+        amount: result.order.amount,
+        currency: result.order.currency,
+        name: "PrepMark",
+        description: "PrepMark Premium membership",
+        order_id: result.order.id,
+        handler: async (paymentResponse) => {
+          const verification = await fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(paymentResponse)
+          });
+          const verificationResult = await verification.json();
+          if (!verification.ok || !verificationResult.success) {
+            setPaymentError(verificationResult.error || "Payment verification failed.");
+            return;
+          }
+          navigate("/create-account");
+        },
+        modal: {
+          ondismiss: () => setIsPaymentLoading(false)
+        },
+        theme: { color: "#3521b5" }
+      });
+
+      checkout.on("payment.failed", (failure) => {
+        setPaymentError(failure.error?.description || "Payment failed. Please try again.");
+        setIsPaymentLoading(false);
+      });
+      checkout.open();
+    } catch (error) {
+      setPaymentError(error.message || "Unable to start payment.");
+    } finally {
+      setIsPaymentLoading(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -348,6 +420,7 @@ const Pricing = () => {
         <div className="price-qr-modal-content" onClick={(e) => e.stopPropagation()}>
           <button className="price-qr-modal-close" onClick={handleCloseModal}>✕</button>
           <h3 className="price-qr-modal-title">Scan Code for Payment</h3>
+          {paymentError && <p role="alert">{paymentError}</p>}
           <div className="price-qr-code-container">
             <img 
               src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=merchant@upi&pn=SkillyugEducation&am=100&cu=INR" 
@@ -361,6 +434,14 @@ const Pricing = () => {
               New Code
             </button>
           </div>
+        </div>
+      </div>
+    )}
+    {isPaymentLoading && (
+      <div className="price-qr-modal-overlay" role="status">
+        <div className="price-qr-modal-content">
+          <h3 className="price-qr-modal-title">Starting secure payment…</h3>
+          <p>Please wait while Razorpay checkout loads.</p>
         </div>
       </div>
     )}
