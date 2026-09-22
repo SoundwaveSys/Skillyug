@@ -12,142 +12,6 @@ const pool = new Pool({
   idleTimeoutMillis: 30_000
 });
 
-export const initializeStudentProfiles = async () => {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS student_profiles (
-      id BIGSERIAL PRIMARY KEY,
-      firebase_user_id TEXT NOT NULL UNIQUE,
-      email TEXT NOT NULL,
-      full_name TEXT NOT NULL DEFAULT '',
-      date_of_birth DATE,
-      guardian_name TEXT NOT NULL DEFAULT '',
-      guardian_email TEXT NOT NULL DEFAULT '',
-      guardian_phone TEXT NOT NULL DEFAULT '',
-      is_guardian_verified BOOLEAN NOT NULL DEFAULT FALSE,
-      role TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `);
-  await pool.query('ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS role TEXT');
-  await pool.query(
-    'CREATE INDEX IF NOT EXISTS idx_student_profiles_email ON student_profiles (lower(email))'
-  );
-};
-
-const mapStudentProfile = (row) => row ? ({
-  uid: row.firebase_user_id,
-  email: row.email,
-  fullName: row.full_name,
-  displayName: row.full_name,
-  dateOfBirth: row.date_of_birth
-    ? new Date(row.date_of_birth).toISOString().slice(0, 10)
-    : '',
-  guardianName: row.guardian_name,
-  guardianEmail: row.guardian_email,
-  guardianPhone: row.guardian_phone,
-  isGuardianVerified: row.is_guardian_verified,
-  createdAt: row.created_at,
-  updatedAt: row.updated_at
-}) : null;
-
-export const findStudentProfile = async (firebaseUserId) => {
-  const result = await pool.query(
-    `SELECT firebase_user_id, email, full_name, date_of_birth, guardian_name,
-            guardian_email, guardian_phone, is_guardian_verified, created_at, updated_at
-       FROM student_profiles
-      WHERE firebase_user_id = $1
-      LIMIT 1`,
-    [firebaseUserId]
-  );
-  return mapStudentProfile(result.rows[0]);
-};
-
-export const listStudentProfiles = async ({ limit = 25, offset = 0, search = '' } = {}) => {
-  const normalizedSearch = String(search).trim();
-  const escapedSearch = normalizedSearch.replace(/[\\%_]/g, '\\$&');
-  const searchPattern = `%${escapedSearch}%`;
-  const values = normalizedSearch
-    ? [searchPattern, limit, offset]
-    : [limit, offset];
-  const whereClause = normalizedSearch
-    ? `WHERE role = 'student'
-        AND (full_name ILIKE $1 ESCAPE '\\'
-          OR email ILIKE $1 ESCAPE '\\'
-          OR guardian_name ILIKE $1 ESCAPE '\\'
-          OR guardian_email ILIKE $1 ESCAPE '\\'
-          OR guardian_phone ILIKE $1 ESCAPE '\\')`
-    : `WHERE role = 'student'`;
-  const limitParameter = normalizedSearch ? '$2' : '$1';
-  const offsetParameter = normalizedSearch ? '$3' : '$2';
-
-  const [profilesResult, countResult] = await Promise.all([
-    pool.query(
-      `SELECT firebase_user_id, email, full_name, date_of_birth, guardian_name,
-              guardian_email, guardian_phone, is_guardian_verified, created_at, updated_at
-         FROM student_profiles
-         ${whereClause}
-        ORDER BY created_at DESC, id DESC
-        LIMIT ${limitParameter} OFFSET ${offsetParameter}`,
-      values
-    ),
-    pool.query(
-      `SELECT COUNT(*)::integer AS total
-         FROM student_profiles
-         ${whereClause}`,
-      normalizedSearch ? [searchPattern] : []
-    )
-  ]);
-
-  return {
-    students: profilesResult.rows.map(mapStudentProfile),
-    total: countResult.rows[0]?.total || 0
-  };
-};
-
-export const upsertStudentProfile = async ({
-  firebaseUserId,
-  email,
-  fullName = '',
-  dateOfBirth = null,
-  guardianName = '',
-  guardianEmail = '',
-  guardianPhone = '',
-  isGuardianVerified = false,
-  role = 'student'
-}) => {
-  const result = await pool.query(
-    `INSERT INTO student_profiles
-      (firebase_user_id, email, full_name, date_of_birth, guardian_name,
-       guardian_email, guardian_phone, is_guardian_verified, role)
-     VALUES ($1, $2, $3, NULLIF($4, '')::date, $5, $6, $7, $8, $9)
-     ON CONFLICT (firebase_user_id) DO UPDATE SET
-       email = EXCLUDED.email,
-       full_name = EXCLUDED.full_name,
-       date_of_birth = EXCLUDED.date_of_birth,
-       guardian_name = EXCLUDED.guardian_name,
-       guardian_email = EXCLUDED.guardian_email,
-       guardian_phone = EXCLUDED.guardian_phone,
-       is_guardian_verified = EXCLUDED.is_guardian_verified,
-       role = EXCLUDED.role,
-       updated_at = now()
-     RETURNING firebase_user_id, email, full_name, date_of_birth, guardian_name,
-               guardian_email, guardian_phone, is_guardian_verified, created_at, updated_at`,
-    [
-      firebaseUserId,
-      email,
-      fullName,
-      dateOfBirth || '',
-      guardianName,
-      guardianEmail,
-      guardianPhone,
-      Boolean(isGuardianVerified),
-      role
-    ]
-  );
-  return mapStudentProfile(result.rows[0]);
-};
-
 export const createPaymentRecord = async ({
   firebaseUserId,
   userEmail,
@@ -234,23 +98,17 @@ export const claimGuestPayment = async ({
   const result = await pool.query(
     `UPDATE payment_transactions
         SET firebase_user_id = $3,
-            user_email = $4,
-            metadata = metadata || $5::jsonb,
+            user_email = COALESCE($4, user_email),
             updated_at = now()
       WHERE razorpay_order_id = $1
-        AND firebase_user_id IN ($2, $3)
+        AND firebase_user_id = $2
         AND status IN ('paid', 'authorized')
       RETURNING id, firebase_user_id, user_email, razorpay_order_id,
                 razorpay_payment_id, amount_paise, currency, status,
-                payment_method, created_at, updated_at`,
-    [
-      razorpayOrderId,
-      guestOwnerId,
-      firebaseUserId,
-      userEmail,
-      JSON.stringify({ claimedAt: new Date().toISOString() })
-    ]
+                payment_method, failure_reason, created_at, updated_at`,
+    [razorpayOrderId, guestOwnerId, firebaseUserId, userEmail || null]
   );
+
   return result.rows[0] || null;
 };
 
