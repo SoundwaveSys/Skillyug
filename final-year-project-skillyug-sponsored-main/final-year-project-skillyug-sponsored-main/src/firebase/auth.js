@@ -84,6 +84,39 @@ const createUserProfile = async (uid, userData) => {
   }
 };
 
+const saveStudentProfileToDatabase = async (profileData) => {
+  const user = auth.currentUser;
+  if (!user) throw new Error('No user logged in');
+
+  const response = await fetch('/api/student-profile', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await user.getIdToken()}`
+    },
+    body: JSON.stringify(profileData)
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || 'Failed to save student profile');
+  }
+  return result.profile;
+};
+
+const loadStudentProfileFromDatabase = async () => {
+  const user = auth.currentUser;
+  if (!user) throw new Error('No user logged in');
+
+  const response = await fetch('/api/student-profile', {
+    headers: { Authorization: `Bearer ${await user.getIdToken()}` }
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || 'Failed to load student profile');
+  }
+  return result.profile;
+};
+
 /**
  * Register new user with email and password
  * 
@@ -547,11 +580,32 @@ export const getUserProfile = async () => {
     const userSnap = await getDoc(userRef);
     
     if (userSnap.exists()) {
+      const firestoreProfile = userSnap.data();
+      let databaseProfile = null;
+      try {
+        databaseProfile = await loadStudentProfileFromDatabase();
+        if (!databaseProfile) {
+          databaseProfile = await saveStudentProfileToDatabase({
+            fullName: firestoreProfile.fullName || firestoreProfile.displayName || user.displayName || '',
+            dateOfBirth: firestoreProfile.dateOfBirth || '',
+            guardianName: firestoreProfile.guardianName || '',
+            guardianEmail: firestoreProfile.guardianEmail || '',
+            guardianPhone: firestoreProfile.guardianPhone || '',
+            isGuardianVerified: firestoreProfile.isGuardianVerified || false
+          });
+        }
+      } catch (databaseError) {
+        console.error('❌ Student profile database sync failed:', databaseError);
+        throw databaseError;
+      }
+
       return {
         success: true,
         profile: {
           uid: user.uid,
-          ...userSnap.data()
+          ...firestoreProfile,
+          ...databaseProfile,
+          role: firestoreProfile.role || 'student'
         }
       };
     } else {
@@ -579,7 +633,9 @@ export const updateUserProfile = async (profileData) => {
     
     const userRef = doc(db, 'users', user.uid);
     
-    // Update Firestore profile with new data
+    const databaseProfile = await saveStudentProfileToDatabase(profileData);
+
+    // Keep role, learning progress, and compatibility fields in Firestore.
     await updateDoc(userRef, {
       ...profileData,
       updatedAt: serverTimestamp()
@@ -594,6 +650,7 @@ export const updateUserProfile = async (profileData) => {
     
     return {
       success: true,
+      profile: databaseProfile,
       message: 'Profile updated successfully!'
     };
   } catch (error) {

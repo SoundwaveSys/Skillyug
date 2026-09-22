@@ -12,6 +12,95 @@ const pool = new Pool({
   idleTimeoutMillis: 30_000
 });
 
+export const initializeStudentProfiles = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS student_profiles (
+      id BIGSERIAL PRIMARY KEY,
+      firebase_user_id TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL,
+      full_name TEXT NOT NULL DEFAULT '',
+      date_of_birth DATE,
+      guardian_name TEXT NOT NULL DEFAULT '',
+      guardian_email TEXT NOT NULL DEFAULT '',
+      guardian_phone TEXT NOT NULL DEFAULT '',
+      is_guardian_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  await pool.query(
+    'CREATE INDEX IF NOT EXISTS idx_student_profiles_email ON student_profiles (lower(email))'
+  );
+};
+
+const mapStudentProfile = (row) => row ? ({
+  uid: row.firebase_user_id,
+  email: row.email,
+  fullName: row.full_name,
+  displayName: row.full_name,
+  dateOfBirth: row.date_of_birth
+    ? new Date(row.date_of_birth).toISOString().slice(0, 10)
+    : '',
+  guardianName: row.guardian_name,
+  guardianEmail: row.guardian_email,
+  guardianPhone: row.guardian_phone,
+  isGuardianVerified: row.is_guardian_verified,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at
+}) : null;
+
+export const findStudentProfile = async (firebaseUserId) => {
+  const result = await pool.query(
+    `SELECT firebase_user_id, email, full_name, date_of_birth, guardian_name,
+            guardian_email, guardian_phone, is_guardian_verified, created_at, updated_at
+       FROM student_profiles
+      WHERE firebase_user_id = $1
+      LIMIT 1`,
+    [firebaseUserId]
+  );
+  return mapStudentProfile(result.rows[0]);
+};
+
+export const upsertStudentProfile = async ({
+  firebaseUserId,
+  email,
+  fullName = '',
+  dateOfBirth = null,
+  guardianName = '',
+  guardianEmail = '',
+  guardianPhone = '',
+  isGuardianVerified = false
+}) => {
+  const result = await pool.query(
+    `INSERT INTO student_profiles
+      (firebase_user_id, email, full_name, date_of_birth, guardian_name,
+       guardian_email, guardian_phone, is_guardian_verified)
+     VALUES ($1, $2, $3, NULLIF($4, '')::date, $5, $6, $7, $8)
+     ON CONFLICT (firebase_user_id) DO UPDATE SET
+       email = EXCLUDED.email,
+       full_name = EXCLUDED.full_name,
+       date_of_birth = EXCLUDED.date_of_birth,
+       guardian_name = EXCLUDED.guardian_name,
+       guardian_email = EXCLUDED.guardian_email,
+       guardian_phone = EXCLUDED.guardian_phone,
+       is_guardian_verified = EXCLUDED.is_guardian_verified,
+       updated_at = now()
+     RETURNING firebase_user_id, email, full_name, date_of_birth, guardian_name,
+               guardian_email, guardian_phone, is_guardian_verified, created_at, updated_at`,
+    [
+      firebaseUserId,
+      email,
+      fullName,
+      dateOfBirth || '',
+      guardianName,
+      guardianEmail,
+      guardianPhone,
+      Boolean(isGuardianVerified)
+    ]
+  );
+  return mapStudentProfile(result.rows[0]);
+};
+
 export const createPaymentRecord = async ({
   firebaseUserId,
   userEmail,

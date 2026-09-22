@@ -8,7 +8,10 @@ import {
   findPaymentByPaymentId,
   updatePaymentRecord,
   processRazorpayWebhook,
-  listPaymentTransactions
+  listPaymentTransactions,
+  findStudentProfile,
+  upsertStudentProfile,
+  initializeStudentProfiles
 } from './db.js';
 
 dotenv.config();
@@ -205,6 +208,69 @@ app.post(
 );
 
 app.use(express.json({ limit: '10kb' }));
+
+const studentProfileFields = [
+  'fullName',
+  'dateOfBirth',
+  'guardianName',
+  'guardianEmail',
+  'guardianPhone',
+  'isGuardianVerified'
+];
+
+const normalizeStudentProfile = (body = {}) => {
+  const profile = {};
+  for (const field of studentProfileFields) {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      profile[field] = field === 'isGuardianVerified'
+        ? Boolean(body[field])
+        : String(body[field] ?? '').trim();
+    }
+  }
+  return profile;
+};
+
+app.get('/api/student-profile', async (req, res) => {
+  const firebaseUser = await authenticateFirebaseUser(req, res);
+  if (!firebaseUser) return;
+
+  try {
+    const profile = await findStudentProfile(firebaseUser.uid);
+    return res.json({ success: true, profile });
+  } catch (error) {
+    console.error('Student profile lookup failed:', error.message);
+    return res.status(500).json({ success: false, error: 'Unable to load the student profile.' });
+  }
+});
+
+app.put('/api/student-profile', async (req, res) => {
+  const firebaseUser = await authenticateFirebaseUser(req, res);
+  if (!firebaseUser) return;
+
+  try {
+    const current = await findStudentProfile(firebaseUser.uid);
+    const updates = normalizeStudentProfile(req.body);
+    const profile = await upsertStudentProfile({
+      firebaseUserId: firebaseUser.uid,
+      email: firebaseUser.email,
+      fullName: updates.fullName ?? current?.fullName ?? '',
+      dateOfBirth: updates.dateOfBirth ?? current?.dateOfBirth ?? '',
+      guardianName: updates.guardianName ?? current?.guardianName ?? '',
+      guardianEmail: updates.guardianEmail ?? current?.guardianEmail ?? '',
+      guardianPhone: updates.guardianPhone ?? current?.guardianPhone ?? '',
+      isGuardianVerified:
+        updates.isGuardianVerified ?? current?.isGuardianVerified ?? false
+    });
+    return res.json({ success: true, profile });
+  } catch (error) {
+    console.error('Student profile save failed:', error.message);
+    const invalidDate = error.code === '22007';
+    return res.status(invalidDate ? 400 : 500).json({
+      success: false,
+      error: invalidDate ? 'Date of birth is invalid.' : 'Unable to save the student profile.'
+    });
+  }
+});
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Razorpay server is running' });
@@ -532,6 +598,13 @@ app.get('/api/admin/payments', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Razorpay server running on port ${port}`);
-});
+initializeStudentProfiles()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Razorpay server running on port ${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Database initialization failed:', error);
+    process.exitCode = 1;
+  });
