@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged } from "@firebase/auth";
 import "../css files/Pricing.css";
 import ParticleBackground from "../components/StarBg";
 import Navbar from "../components/Navbar";

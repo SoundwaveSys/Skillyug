@@ -2,6 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import {
   createPaymentRecord,
   findPaymentByOrder,
@@ -18,7 +20,8 @@ import {
 dotenv.config();
 
 const app = express();
-const port = process.env.RAZORPAY_PORT || 3001;
+const port = process.env.PORT || process.env.RAZORPAY_PORT || 3001;
+const appDirectory = path.dirname(fileURLToPath(import.meta.url));
 const PAYMENT_AMOUNT_PAISE = 10000;
 const PAYMENT_CURRENCY = 'INR';
 
@@ -701,6 +704,14 @@ app.get('/api/admin/students', async (req, res) => {
     console.error('Admin students error:', error.message);
     res.status(500).json({ success: false, error: 'Unable to load registered students.' });
   }
+});
+
+app.use(express.static(path.join(appDirectory, 'dist')));
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || req.path.startsWith('/api/')) {
+    return next();
+  }
+  return res.sendFile(path.join(appDirectory, 'dist', 'index.html'));
 });
 
 initializeStudentProfiles()

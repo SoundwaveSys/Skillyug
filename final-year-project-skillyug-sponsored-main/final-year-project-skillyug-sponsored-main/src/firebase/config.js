@@ -10,11 +10,11 @@
  * Follow security best practices by never committing .env to Git
  */
 
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getAnalytics } from 'firebase/analytics';
+import { initializeApp } from '@firebase/app';
+import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from '@firebase/auth';
+import { getFirestore, enableIndexedDbPersistence } from '@firebase/firestore';
+import { getStorage } from '@firebase/storage';
+import { getAnalytics } from '@firebase/analytics';
 
 // Firebase configuration object from environment variables
 const firebaseConfig = {

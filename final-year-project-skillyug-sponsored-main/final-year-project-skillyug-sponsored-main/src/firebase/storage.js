@@ -19,7 +19,7 @@ import {
   getDownloadURL,
   deleteObject,
   listAll
-} from 'firebase/storage';
+} from '@firebase/storage';
 import { storage } from './config';
 
 /**

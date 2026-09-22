@@ -31,7 +31,7 @@ import {
   serverTimestamp,
   increment,
   arrayUnion
-} from 'firebase/firestore';
+} from '@firebase/firestore';
 import { db } from './config';
 
 // ==================== QUESTIONS MANAGEMENT (FLAT COLLECTION) ====================

@@ -24,8 +24,8 @@ import {
   reauthenticateWithCredential,
   deleteUser,
   onAuthStateChanged
-} from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+} from '@firebase/auth';
+import { doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp } from '@firebase/firestore';
 import { auth, googleProvider, db } from './config';
 
 /**

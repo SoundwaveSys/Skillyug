@@ -36,5 +36,18 @@ localPort = 3002
 externalPort = 3002
 
 [[ports]]
+localPort = 3003
+externalPort = 3003
+
+[[ports]]
 localPort = 5000
 externalPort = 80
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 180000
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["bash", "-c", "cd final-year-project-skillyug-sponsored-main/final-year-project-skillyug-sponsored-main && node server.js"]
+build = ["bash", "-c", "cd final-year-project-skillyug-sponsored-main/final-year-project-skillyug-sponsored-main && npm run build"]
