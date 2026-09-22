@@ -49,14 +49,14 @@ const ContactUs = () => {
                   <div className="contus-info-item">
                     <span className="contus-info-icon">📧</span>
                     <div>
-                      <h3>Email - support@skillyug.com</h3>
+                      <h3>Email - usermandar@gmail.com</h3>
                       
                     </div>
                   </div>
                   <div className="contus-info-item">
                     <span className="contus-info-icon">📱</span>
                     <div>
-                      <h3>Phone - +91 9876543210</h3>
+                      <h3>Phone - +919421287961</h3>
                       
                     </div>
                   </div>
