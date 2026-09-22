@@ -1,12 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../css files/ExamResults.css';
 import MainNavbar from '../components/MainNavbar';
 import Footer from '../components/Footer';
+import { useAuth } from '../contexts/AuthContext';
+import { saveExamHistory } from '../firebase/firestore';
 
 const ExamResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const hasSavedResult = useRef(false);
   const { 
     examType, 
     totalQuestions, 
@@ -19,12 +23,18 @@ const ExamResults = () => {
     timeSpent,
     answerReview = []
   } = location.state || {};
+  const fromHistory = Boolean(location.state?.fromHistory);
 
   useEffect(() => {
     if (!location.state) {
       navigate('/exam');
       return;
     }
+
+    if (fromHistory || hasSavedResult.current || !user) {
+      return;
+    }
+    hasSavedResult.current = true;
 
     const examLog = {
       examType,
@@ -36,19 +46,17 @@ const ExamResults = () => {
       score,
       percentage,
       timeSpent,
+      answerReview,
       date: new Date().toISOString()
     };
 
-    // Get existing history
-    const existingHistory = localStorage.getItem('examHistory');
-    const history = existingHistory ? JSON.parse(existingHistory) : [];
-    
-    // Add new log
-    history.push(examLog);
-    
-    // Save updated history
-    localStorage.setItem('examHistory', JSON.stringify(history));
-  }, [location.state, navigate, examType, totalQuestions, attempted, correct, wrong, unattempted, score, percentage, timeSpent]);
+    saveExamHistory(user.uid, examLog).then((result) => {
+      if (!result.success) {
+        console.error('Unable to save exam result:', result.error);
+        hasSavedResult.current = false;
+      }
+    });
+  }, [location.state, navigate, user, fromHistory, examType, totalQuestions, attempted, correct, wrong, unattempted, score, percentage, timeSpent, answerReview]);
 
   // If no data, redirect back after the hook has been registered.
   if (!location.state) {

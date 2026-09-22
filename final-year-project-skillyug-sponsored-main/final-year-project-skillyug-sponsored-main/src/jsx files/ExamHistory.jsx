@@ -1,27 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css files/ExamHistory.css';
 import MainNavbar from '../components/MainNavbar';
 import Footer from '../components/Footer';
 import ParticleBackground from '../components/StarBg';
+import { useExamHistory } from '../hooks/useFirebase';
 
 const ExamHistory = () => {
   const navigate = useNavigate();
-  const [examLogs, setExamLogs] = useState([]);
+  const { history, loading, error, clearHistory } = useExamHistory();
   const [sortBy, setSortBy] = useState('date-desc');
-
-  useEffect(() => {
-    // Load exam history from localStorage
-    const storedLogs = localStorage.getItem('examHistory');
-    if (storedLogs) {
-      const logs = JSON.parse(storedLogs);
-      const sanitizedLogs = logs.map(log => ({
-        ...log,
-        percentage: Number(log.percentage || 0)
-      }));
-      setExamLogs(sanitizedLogs);
-    }
-  }, []);
+  const examLogs = history.map(log => ({
+    ...log,
+    percentage: Number(log.percentage || 0)
+  }));
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -33,7 +25,9 @@ const ExamHistory = () => {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    const date = dateString?.toDate
+      ? dateString.toDate()
+      : new Date(dateString || Date.now());
     const options = { 
       year: 'numeric', 
       month: 'short', 
@@ -121,11 +115,23 @@ No signature required.
     window.URL.revokeObjectURL(url);
   };
 
-  const handleClearHistory = () => {
+  const handleClearHistory = async () => {
     if (window.confirm('Are you sure you want to clear all exam history? This action cannot be undone.')) {
-      localStorage.removeItem('examHistory');
-      setExamLogs([]);
+      const result = await clearHistory();
+      if (!result.success) {
+        alert(`Could not clear exam history: ${result.error}`);
+      }
     }
+  };
+
+  const handleReviewAnswers = (log) => {
+    navigate('/exam-results', {
+      state: {
+        ...log,
+        fromHistory: true,
+        answerReview: log.answerReview || []
+      }
+    });
   };
 
   const sortedLogs = [...examLogs].sort((a, b) => {
@@ -175,7 +181,16 @@ No signature required.
             </button>
           </div>
 
-          {examLogs.length > 0 ? (
+          {loading ? (
+            <div className="empty-state">
+              <h2 className="empty-title">Loading your exam history...</h2>
+            </div>
+          ) : error ? (
+            <div className="empty-state">
+              <h2 className="empty-title">Could not load exam history</h2>
+              <p className="empty-description">{error}</p>
+            </div>
+          ) : examLogs.length > 0 ? (
             <>
               {/* Stats Overview */}
               <div className="stats-grid">
@@ -274,6 +289,15 @@ No signature required.
                             </span>
                           </td>
                           <td className="action-cell">
+                            {log.answerReview?.length > 0 && (
+                              <button
+                                className="review-btn"
+                                onClick={() => handleReviewAnswers(log)}
+                                title="Review wrong and unattempted answers"
+                              >
+                                Review Answers
+                              </button>
+                            )}
                             <button 
                               className="download-btn"
                               onClick={() => handleDownloadGradeCard(log)}

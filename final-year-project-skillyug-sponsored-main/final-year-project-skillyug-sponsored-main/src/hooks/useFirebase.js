@@ -16,6 +16,7 @@ import {
   fetchExamHistory,
   saveExamHistory,
   deleteExamHistory,
+  clearAllExamHistory,
   updateUserXP,
   updateUserStreak
 } from '../firebase/firestore';
@@ -283,6 +284,22 @@ export const useExamHistory = () => {
     }
   }, [user]);
 
+  const clearHistory = useCallback(async () => {
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    try {
+      const result = await clearAllExamHistory(user.uid);
+      if (result.success) {
+        setHistory([]);
+        setLastDoc(null);
+        setHasMore(false);
+      }
+      return result;
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  }, [user]);
+
   // Load on mount
   useEffect(() => {
     loadHistory();
@@ -296,6 +313,7 @@ export const useExamHistory = () => {
     loadMore,
     addExam,
     deleteExam,
+    clearHistory,
     refresh: loadHistory
   };
 };

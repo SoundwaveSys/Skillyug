@@ -970,9 +970,10 @@ const LandingPage = () => {
                                   />
                                   <blockquote className="lp-owner-quote">"Every child can build a sharper mind with the right practice—one small win each day."</blockquote>
                                   <p className="lp-owner-speech">Hi, I\'m the founder of PrepMark. We built this platform to make brain training engaging and effective for students. Try a few lessons, watch the progress reports, and you\'ll see confidence grow week by week. Keep learning—your future self will thank you.</p>
+                                 
                                   <div className="lp-owner-meta">
-                                      <div className="lp-owner-name">Rahul Mehta</div>
-                                      <div className="lp-owner-role">Founder, PrepMark</div>
+                                      <div className="lp-owner-name">Mandar Patil</div>
+                                      <div className="lp-owner-role">Co-Founder, PrepMark</div>
                                   </div>
                               </div>
                           </div>

@@ -342,6 +342,28 @@
   box-shadow: 0 4px 12px rgba(204, 73, 21, 0.4);
 }
 
+.action-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.review-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.review-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;
