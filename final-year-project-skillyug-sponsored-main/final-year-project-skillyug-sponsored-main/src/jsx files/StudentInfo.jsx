@@ -15,14 +15,19 @@ const StudentInfo = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const nextValue = name === "guardianPhone"
+      ? value.replace(/\D/g, "").slice(0, 10)
+      : value;
+    setFieldErrors(prev => ({ ...prev, [name]: "" }));
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: nextValue
     }));
 
     // Auto-calculate age from date of birth
@@ -38,9 +43,25 @@ const StudentInfo = () => {
     }
   };
 
+  const validateForm = () => {
+    const nextErrors = {};
+    if (!formData.fullName.trim()) nextErrors.fullName = "Enter the student's full name.";
+    if (!formData.dateOfBirth) nextErrors.dateOfBirth = "Choose a date of birth.";
+    if (formData.dateOfBirth && new Date(formData.dateOfBirth) > new Date()) {
+      nextErrors.dateOfBirth = "Date of birth cannot be in the future.";
+    }
+    if (!formData.guardianName.trim()) nextErrors.guardianName = "Enter a guardian's name.";
+    if (!/^\d{10}$/.test(formData.guardianPhone)) {
+      nextErrors.guardianPhone = "Enter a 10-digit phone number.";
+    }
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (!validateForm()) return;
     setLoading(true);
 
     try {
@@ -53,13 +74,7 @@ const StudentInfo = () => {
       });
 
       if (result.success) {
-        // Navigate to guardian verification (OTP)
-        navigate("/guardian-verification", { 
-          state: { 
-            phoneNumber: formData.guardianPhone,
-            guardianName: formData.guardianName 
-          } 
-        });
+        navigate("/home");
       } else {
         setError(result.error || "Failed to save profile information");
       }
@@ -76,27 +91,30 @@ const StudentInfo = () => {
       <ParticleBackground />
       
       <div className="profile-info-container">
-        <h1 className="profile-info-title">Student Information</h1>
-        <p className="profile-info-subtitle">Complete your profile details</p>
+        <div className="profile-info-header">
+          <div>
+            <p className="profile-info-kicker">PrepMark · Step 1 of 1</p>
+            <h1 className="profile-info-title">A little about you</h1>
+            <p className="profile-info-subtitle">These details help us shape a learning experience that feels right for your family.</p>
+          </div>
+          <button type="button" className="profile-home-btn" onClick={() => navigate("/home")}>
+            Home
+          </button>
+        </div>
 
         {error && (
-          <div style={{
-            padding: '0.75rem',
-            marginBottom: '1rem',
-            backgroundColor: '#fee',
-            color: '#c33',
-            borderRadius: '0.5rem',
-            fontSize: '0.9rem',
-            border: '1px solid #fcc'
-          }}>
+          <div className="profile-error" role="alert">
+            <span aria-hidden="true">!</span>
             {error}
           </div>
         )}
 
         <form className="profile-info-form" onSubmit={handleSubmit}>
-          <div className="form-row">
+          <fieldset className="form-section">
+            <legend>Student details</legend>
+            <div className="form-row">
             <div className="form-group">
-              <label htmlFor="fullName">Full Name *</label>
+              <label htmlFor="fullName">Full name <span className="required-mark" aria-hidden="true">*</span></label>
               <input
                 type="text"
                 id="fullName"
@@ -105,12 +123,14 @@ const StudentInfo = () => {
                 onChange={handleChange}
                 placeholder="Enter your full name"
                 disabled={loading}
-                required
+                aria-invalid={Boolean(fieldErrors.fullName)}
+                aria-describedby={fieldErrors.fullName ? "fullName-error" : undefined}
               />
+              {fieldErrors.fullName && <p id="fullName-error" className="field-error">{fieldErrors.fullName}</p>}
             </div>
 
             <div className="form-group">
-              <label htmlFor="dateOfBirth">Date of Birth *</label>
+              <label htmlFor="dateOfBirth">Date of birth <span className="required-mark" aria-hidden="true">*</span></label>
               <input
                 type="date"
                 id="dateOfBirth"
@@ -118,12 +138,14 @@ const StudentInfo = () => {
                 value={formData.dateOfBirth}
                 onChange={handleChange}
                 disabled={loading}
-                required
+                aria-invalid={Boolean(fieldErrors.dateOfBirth)}
+                aria-describedby={fieldErrors.dateOfBirth ? "dateOfBirth-error" : undefined}
               />
+              {fieldErrors.dateOfBirth && <p id="dateOfBirth-error" className="field-error">{fieldErrors.dateOfBirth}</p>}
             </div>
-          </div>
+            </div>
 
-          <div className="form-row">
+            <div className="form-row" style={{ marginTop: "1rem" }}>
             <div className="form-group">
               <label htmlFor="age">Age</label>
               <input
@@ -134,12 +156,16 @@ const StudentInfo = () => {
                 readOnly
                 placeholder="Auto-calculated"
               />
+              <p className="field-hint">Calculated from your date of birth.</p>
             </div>
-          </div>
+            </div>
+          </fieldset>
 
-          <div className="form-row">
+          <fieldset className="form-section">
+            <legend>Family contact</legend>
+            <div className="form-row">
             <div className="form-group">
-              <label htmlFor="guardianName">Guardian's Name *</label>
+              <label htmlFor="guardianName">Guardian's name <span className="required-mark" aria-hidden="true">*</span></label>
               <input
                 type="text"
                 id="guardianName"
@@ -148,12 +174,14 @@ const StudentInfo = () => {
                 onChange={handleChange}
                 placeholder="Enter guardian's full name"
                 disabled={loading}
-                required
+                aria-invalid={Boolean(fieldErrors.guardianName)}
+                aria-describedby={fieldErrors.guardianName ? "guardianName-error" : undefined}
               />
+              {fieldErrors.guardianName && <p id="guardianName-error" className="field-error">{fieldErrors.guardianName}</p>}
             </div>
 
             <div className="form-group">
-              <label htmlFor="guardianPhone">Guardian's Phone *</label>
+              <label htmlFor="guardianPhone">Guardian's phone <span className="required-mark" aria-hidden="true">*</span></label>
               <input
                 type="tel"
                 id="guardianPhone"
@@ -161,21 +189,24 @@ const StudentInfo = () => {
                 value={formData.guardianPhone}
                 onChange={handleChange}
                 placeholder="10-digit phone number"
-                pattern="[0-9]{10}"
-                maxLength="10"
+                inputMode="numeric"
+                maxLength={10}
                 disabled={loading}
-                required
+                aria-invalid={Boolean(fieldErrors.guardianPhone)}
+                aria-describedby={fieldErrors.guardianPhone ? "guardianPhone-error" : undefined}
               />
+              {fieldErrors.guardianPhone && <p id="guardianPhone-error" className="field-error">{fieldErrors.guardianPhone}</p>}
             </div>
-          </div>
+            </div>
+          </fieldset>
 
           <button type="submit" className="profile-submit-btn" disabled={loading}>
-            {loading ? 'Saving...' : 'Continue to Verification'}
+            {loading ? "Saving your details..." : "Save and go to Home"}
           </button>
         </form>
 
-        <button className="profile-back-btn" onClick={() => navigate("/choose-role")} disabled={loading}>
-          Back
+        <button type="button" className="profile-back-btn" onClick={() => navigate("/choose-role")} disabled={loading}>
+          Back to role selection
         </button>
       </div>
     </div>

@@ -11,8 +11,6 @@ import CreateAccount from "./jsx files/CreateAccount";
 import ChooseRole from "./jsx files/ChooseRole";
 import StudentInfo from "./jsx files/StudentInfo";
 import AdminInfo from "./jsx files/AdminInfo";
-import GuardianVerification from "./jsx files/GuardianVerification";
-import VerifyOTP from "./jsx files/VerifyOTP";
 import Home from "./jsx files/Home";
 import Quest from "./jsx files/Quest";
 
@@ -69,8 +67,6 @@ function AppRoutes() {
         <Route path="/choose-role" element={<ChooseRole />} />
         <Route path="/student-info" element={<StudentInfo />} />
         <Route path="/admin-info" element={<AdminInfo />} />
-        <Route path="/guardian-verification" element={<GuardianVerification />} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/home" element={<Home />} />
         <Route path="/quest" element={<Quest />} />
         <Route path="/profile" element={<Profile/>} />

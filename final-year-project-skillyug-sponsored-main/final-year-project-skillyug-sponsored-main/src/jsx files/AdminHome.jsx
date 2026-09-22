@@ -125,7 +125,6 @@ const AdminHome = () => {
                         <th>Date of birth</th>
                         <th>Guardian</th>
                         <th>Guardian phone</th>
-                        <th>Verification</th>
                         <th>Registered</th>
                         <th>Updated</th>
                       </tr>
@@ -143,11 +142,6 @@ const AdminHome = () => {
                             <small>{student.guardianEmail || 'No email provided'}</small>
                           </td>
                           <td>{student.guardianPhone || '—'}</td>
-                          <td>
-                            <span className={`admin-status ${student.isGuardianVerified ? 'admin-status-paid' : 'admin-status-pending'}`}>
-                              {student.isGuardianVerified ? 'Verified' : 'Pending'}
-                            </span>
-                          </td>
                           <td>{formatDate(student.createdAt)}</td>
                           <td>{formatDate(student.updatedAt)}</td>
                         </tr>
