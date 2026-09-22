@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { loginWithEmail } from "../firebase/auth";
 import "../css files/Login.css";
 import ParticleBackground from "../components/StarBg";
@@ -11,6 +11,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = location.state?.returnTo === "/pricing" ? "/pricing" : "/home";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,8 +23,7 @@ const Login = () => {
       const result = await loginWithEmail(email, password);
       
       if (result.success) {
-        // Login successful - navigate to home
-        navigate("/home");
+        navigate(returnTo, { replace: true });
       } else {
         // Show error message
         setError(result.error);
@@ -62,6 +63,11 @@ const Login = () => {
         </button>
 
         <form className="lgn-login-form" onSubmit={handleSubmit}>
+          {location.state?.message && !error && (
+            <div className="lgn-login-notice" role="status">
+              {location.state.message}
+            </div>
+          )}
           {error && (
             <div style={{
               padding: '0.75rem',

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerWithEmail } from "../firebase/auth";
+import { auth } from "../firebase/config";
 import "../css files/CreateAccount.css";
 import ParticleBackground from "../components/StarBg";
 import Footer from "../components/Footer";
@@ -32,13 +33,48 @@ const CreateAccount = () => {
     setLoading(true);
 
     try {
+      const paidOrderId = localStorage.getItem("verifiedRazorpayOrder");
+      if (!paidOrderId) {
+        setError("Complete payment before creating your account.");
+        return;
+      }
+      const validationResponse = await fetch("/api/validate-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ orderId: paidOrderId })
+      });
+      const validationResult = await validationResponse.json();
+      if (!validationResponse.ok || !validationResult.success) {
+        setError(validationResult.error || "Complete payment before creating your account.");
+        return;
+      }
+
       // Register user with Firebase
       const result = await registerWithEmail(email, password, {
         role: 'student'
       });
       
       if (result.success) {
-        // Registration successful - navigate to choose-role or home
+        if (!auth.currentUser) {
+          setError("Verified payment information was not found. Please contact support.");
+          return;
+        }
+        const claimResponse = await fetch("/api/claim-payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await auth.currentUser.getIdToken()}`
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ orderId: paidOrderId })
+        });
+        const claimResult = await claimResponse.json();
+        if (!claimResponse.ok || !claimResult.success) {
+          setError(claimResult.error || "Unable to link your payment to this account.");
+          return;
+        }
+        localStorage.removeItem("verifiedRazorpayOrder");
         navigate("/choose-role");
       } else {
         setError(result.error);

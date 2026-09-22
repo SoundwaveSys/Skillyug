@@ -1,3 +1,13 @@
+.lgn-login-notice {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #b8acf4;
+  border-radius: 0.5rem;
+  background: #f1efff;
+  color: #24136f;
+  font-size: 0.9rem;
+  text-align: center;
+}
 .lgn-login-page {
   position: relative;
   min-height: 100vh;

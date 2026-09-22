@@ -19,13 +19,13 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd final-year-project-skillyug-sponsored-main/final-year-project-skillyug-sponsored-main && (npm run server & npm run dev)"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd final-year-project-skillyug-sponsored-main/final-year-project-skillyug-sponsored-main && (RAZORPAY_PORT=3001 npm run server & npm run dev)"
+waitForPort = 5000
 
 [[ports]]
 localPort = 3001
@@ -49,5 +49,5 @@ timeoutMs = 180000
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["bash", "-c", "cd final-year-project-skillyug-sponsored-main/final-year-project-skillyug-sponsored-main && node server.js"]
+run = ["bash", "-c", "cd final-year-project-skillyug-sponsored-main/final-year-project-skillyug-sponsored-main && RAZORPAY_PORT=5000 node server.js"]
 build = ["bash", "-c", "cd final-year-project-skillyug-sponsored-main/final-year-project-skillyug-sponsored-main && npm run build"]

@@ -23,22 +23,23 @@ const Pricing = () => {
     let pollTimer;
     let stopped = false;
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async () => {
       const pendingOrderId = localStorage.getItem("pendingRazorpayOrder");
-      if (!user || !pendingOrderId) return;
+      if (!pendingOrderId) return;
 
       const checkPaymentStatus = async () => {
         try {
           const response = await fetch(`/api/payment-status/${encodeURIComponent(pendingOrderId)}`, {
-            headers: { Authorization: `Bearer ${await user.getIdToken()}` }
+            credentials: "same-origin"
           });
           const result = await response.json();
           if (!response.ok || !result.success || stopped) return;
 
-          if (result.payment.status === "paid") {
+          if (["paid", "authorized"].includes(result.payment.status)) {
             localStorage.removeItem("pendingRazorpayOrder");
+            localStorage.setItem("verifiedRazorpayOrder", pendingOrderId);
             clearInterval(pollTimer);
-            navigate("/home");
+            navigate("/create-account");
           } else if (["failed", "cancelled", "refunded"].includes(result.payment.status)) {
             localStorage.removeItem("pendingRazorpayOrder");
             clearInterval(pollTimer);
@@ -82,22 +83,15 @@ const Pricing = () => {
   const handleProceedToPayment = async () => {
     setPaymentError("");
 
-    const user = auth.currentUser;
-    if (!user) {
-      setPaymentError("Please sign in before starting a payment.");
-      return;
-    }
-
     setIsPaymentLoading(true);
     try {
-      const idToken = await user.getIdToken();
       await loadRazorpay();
       const response = await fetch("/api/create-order", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`
+          "Content-Type": "application/json"
         },
+        credentials: "same-origin",
         body: JSON.stringify({})
       });
       const result = await response.json();
@@ -113,8 +107,8 @@ const Pricing = () => {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${await user.getIdToken()}`
             },
+            credentials: "same-origin",
             body: JSON.stringify({ status, failureReason })
           });
         } catch {
@@ -130,7 +124,7 @@ const Pricing = () => {
         description: "PrepMark Premium membership",
         order_id: result.order.id,
         prefill: {
-          email: user.email || ""
+          email: ""
         },
         handler: async (paymentResponse) => {
           try {
@@ -138,8 +132,8 @@ const Pricing = () => {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${await user.getIdToken()}`
               },
+              credentials: "same-origin",
               body: JSON.stringify(paymentResponse)
             });
             const verificationResult = await verification.json();
@@ -149,8 +143,9 @@ const Pricing = () => {
               return;
             }
             localStorage.removeItem("pendingRazorpayOrder");
+            localStorage.setItem("verifiedRazorpayOrder", result.order.id);
             setIsPaymentLoading(false);
-            navigate("/home");
+            navigate("/create-account");
           } catch {
             setIsPaymentLoading(false);
             setPaymentError("Payment verification could not be completed. Please contact support before retrying.");

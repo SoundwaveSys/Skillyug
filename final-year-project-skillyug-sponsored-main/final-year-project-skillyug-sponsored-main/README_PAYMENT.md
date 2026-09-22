@@ -27,11 +27,14 @@ npm run dev
 ## 5) Use Razorpay flow
 
 - Open the Pricing page
-- Sign in with Firebase
 - Click "Proceed to Payment"
-- The authenticated backend creates a fixed ₹100 Test Mode order
+- The backend creates a fixed ₹100 Test Mode order and a secure guest checkout session
 - Payment success triggers signature, order, and payment verification
-- Verified payment status is persisted in the Replit development database
+- After verification, create the Firebase student account
+- The verified payment is linked to the new Firebase user
+- Continue to student and guardian information
+- Unpaid visitors cannot use the account-creation flow
+- Verified payment status is persisted in the Replit database
 
 ## Notes
 

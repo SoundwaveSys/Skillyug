@@ -14,13 +14,14 @@ import {
   listStudentProfiles,
   findStudentProfile,
   upsertStudentProfile,
-  initializeStudentProfiles
+  initializeStudentProfiles,
+  claimGuestPayment
 } from './db.js';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || process.env.RAZORPAY_PORT || 3001;
+const port = process.env.RAZORPAY_PORT || process.env.PORT || 3001;
 const appDirectory = path.dirname(fileURLToPath(import.meta.url));
 const PAYMENT_AMOUNT_PAISE = 10000;
 const PAYMENT_CURRENCY = 'INR';
@@ -110,6 +111,30 @@ const safeSignatureMatch = (expected, received) => {
   const receivedBuffer = Buffer.from(received, 'hex');
   return expectedBuffer.length === receivedBuffer.length &&
     crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+};
+
+const checkoutCookieName = 'prepmark_checkout';
+
+const readCookie = (req, name) => {
+  const prefix = `${name}=`;
+  const cookie = String(req.get('cookie') || '')
+    .split(';')
+    .map((value) => value.trim())
+    .find((value) => value.startsWith(prefix));
+  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : '';
+};
+
+const getGuestOwnerId = (req) => {
+  const sessionId = readCookie(req, checkoutCookieName);
+  return /^[0-9a-f-]{36}$/i.test(sessionId) ? `guest:${sessionId}` : '';
+};
+
+const setCheckoutCookie = (req, res, sessionId) => {
+  const secure = req.secure || req.get('x-forwarded-proto') === 'https' ? '; Secure' : '';
+  res.setHeader(
+    'Set-Cookie',
+    `${checkoutCookieName}=${encodeURIComponent(sessionId)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400${secure}`
+  );
 };
 
 const authenticateAdmin = async (req, res) => {
@@ -351,8 +376,8 @@ app.get('/api/health', (req, res) => {
 
 app.post('/api/create-order', async (req, res) => {
   try {
-    const firebaseUser = await authenticateFirebaseUser(req, res);
-    if (!firebaseUser) return;
+    const sessionId = crypto.randomUUID();
+    const guestOwnerId = `guest:${sessionId}`;
 
     const razorpay = getRazorpay();
     if (!razorpay) {
@@ -369,18 +394,19 @@ app.post('/api/create-order', async (req, res) => {
       notes: {
         plan: 'PrepMark Premium',
         purpose: 'student-membership',
-        firebase_uid: firebaseUser.uid
+        checkout_session_id: sessionId
       }
     });
 
     await createPaymentRecord({
-      firebaseUserId: firebaseUser.uid,
-      userEmail: firebaseUser.email,
+      firebaseUserId: guestOwnerId,
+      userEmail: null,
       razorpayOrderId: order.id,
       amountPaise: order.amount,
       currency: order.currency
     });
 
+    setCheckoutCookie(req, res, sessionId);
     res.json({
       success: true,
       keyId: process.env.RAZORPAY_KEY_ID,
@@ -397,8 +423,10 @@ app.post('/api/create-order', async (req, res) => {
 
 app.post('/api/verify-payment', async (req, res) => {
   try {
-    const firebaseUser = await authenticateFirebaseUser(req, res);
-    if (!firebaseUser) return;
+    const guestOwnerId = getGuestOwnerId(req);
+    if (!guestOwnerId) {
+      return res.status(401).json({ success: false, error: 'Your checkout session has expired.' });
+    }
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
@@ -434,7 +462,7 @@ app.post('/api/verify-payment', async (req, res) => {
     const existingPayment = await findPaymentByPaymentId(razorpay_payment_id);
     if (existingPayment) {
       const isSamePayment =
-        existingPayment.firebase_user_id === firebaseUser.uid &&
+        existingPayment.firebase_user_id === guestOwnerId &&
         existingPayment.razorpay_order_id === razorpay_order_id;
       if (!isSamePayment) {
         return res.status(409).json({
@@ -452,7 +480,7 @@ app.post('/api/verify-payment', async (req, res) => {
       }
     }
 
-    const paymentRecord = await findPaymentByOrder(razorpay_order_id, firebaseUser.uid);
+    const paymentRecord = await findPaymentByOrder(razorpay_order_id, guestOwnerId);
     if (!paymentRecord) {
       return res.status(404).json({
         success: false,
@@ -464,7 +492,7 @@ app.post('/api/verify-payment', async (req, res) => {
     if (
       order.amount !== PAYMENT_AMOUNT_PAISE ||
       order.currency !== PAYMENT_CURRENCY ||
-      order.notes?.firebase_uid !== firebaseUser.uid ||
+      `guest:${order.notes?.checkout_session_id || ''}` !== guestOwnerId ||
       paymentRecord.amount_paise !== PAYMENT_AMOUNT_PAISE ||
       paymentRecord.currency !== PAYMENT_CURRENCY
     ) {
@@ -485,7 +513,7 @@ app.post('/api/verify-payment', async (req, res) => {
     if (payment.status === 'failed') {
       await updatePaymentRecord({
         razorpayOrderId: razorpay_order_id,
-        firebaseUserId: firebaseUser.uid,
+        firebaseUserId: guestOwnerId,
         razorpayPaymentId: razorpay_payment_id,
         status: 'failed',
         paymentMethod: payment.method || null,
@@ -500,7 +528,7 @@ app.post('/api/verify-payment', async (req, res) => {
     if (!['authorized', 'captured'].includes(payment.status)) {
       await updatePaymentRecord({
         razorpayOrderId: razorpay_order_id,
-        firebaseUserId: firebaseUser.uid,
+        firebaseUserId: guestOwnerId,
         razorpayPaymentId: razorpay_payment_id,
         status: 'pending',
         paymentMethod: payment.method || null
@@ -514,7 +542,7 @@ app.post('/api/verify-payment', async (req, res) => {
 
     const savedPayment = await updatePaymentRecord({
       razorpayOrderId: razorpay_order_id,
-      firebaseUserId: firebaseUser.uid,
+      firebaseUserId: guestOwnerId,
       razorpayPaymentId: razorpay_payment_id,
       status: payment.status === 'captured' ? 'paid' : 'authorized',
       paymentMethod: payment.method || null,
@@ -534,7 +562,7 @@ app.post('/api/verify-payment', async (req, res) => {
         amount: order.amount,
         currency: order.currency,
         status: savedPayment.status,
-        userId: firebaseUser.uid
+        requiresSignup: true
       }
     });
   } catch (error) {
@@ -548,10 +576,12 @@ app.post('/api/verify-payment', async (req, res) => {
 
 app.get('/api/payment-status/:orderId', async (req, res) => {
   try {
-    const firebaseUser = await authenticateFirebaseUser(req, res);
-    if (!firebaseUser) return;
+    const guestOwnerId = getGuestOwnerId(req);
+    if (!guestOwnerId) {
+      return res.status(401).json({ success: false, error: 'Your checkout session has expired.' });
+    }
 
-    let payment = await findPaymentByOrder(req.params.orderId, firebaseUser.uid);
+    let payment = await findPaymentByOrder(req.params.orderId, guestOwnerId);
     if (!payment) {
       return res.status(404).json({
         success: false,
@@ -575,7 +605,7 @@ app.get('/api/payment-status/:orderId', async (req, res) => {
             : remotePayment.status;
           payment = await updatePaymentRecord({
             razorpayOrderId: payment.razorpay_order_id,
-            firebaseUserId: firebaseUser.uid,
+            firebaseUserId: guestOwnerId,
             razorpayPaymentId: remotePayment.id,
             status: reconciledStatus,
             paymentMethod: remotePayment.method || null,
@@ -612,8 +642,10 @@ app.get('/api/payment-status/:orderId', async (req, res) => {
 
 app.patch('/api/payment-status/:orderId', async (req, res) => {
   try {
-    const firebaseUser = await authenticateFirebaseUser(req, res);
-    if (!firebaseUser) return;
+    const guestOwnerId = getGuestOwnerId(req);
+    if (!guestOwnerId) {
+      return res.status(401).json({ success: false, error: 'Your checkout session has expired.' });
+    }
 
     const status = req.body.status;
     if (!['failed', 'cancelled'].includes(status)) {
@@ -623,7 +655,7 @@ app.patch('/api/payment-status/:orderId', async (req, res) => {
       });
     }
 
-    const existingPayment = await findPaymentByOrder(req.params.orderId, firebaseUser.uid);
+    const existingPayment = await findPaymentByOrder(req.params.orderId, guestOwnerId);
     if (!existingPayment) {
       return res.status(404).json({
         success: false,
@@ -639,7 +671,7 @@ app.patch('/api/payment-status/:orderId', async (req, res) => {
 
     const payment = await updatePaymentRecord({
       razorpayOrderId: req.params.orderId,
-      firebaseUserId: firebaseUser.uid,
+      firebaseUserId: guestOwnerId,
       status,
       failureReason: String(req.body.failureReason || '').slice(0, 500) || null
     });
@@ -651,6 +683,58 @@ app.patch('/api/payment-status/:orderId', async (req, res) => {
       success: false,
       error: 'Unable to update payment status.'
     });
+  }
+});
+
+app.post('/api/validate-checkout', async (req, res) => {
+  const guestOwnerId = getGuestOwnerId(req);
+  const orderId = String(req.body.orderId || '');
+  if (!guestOwnerId || !orderId) {
+    return res.status(400).json({ success: false, error: 'Verified payment information is missing.' });
+  }
+
+  try {
+    const payment = await findPaymentByOrder(orderId, guestOwnerId);
+    if (!payment || !['paid', 'authorized'].includes(payment.status)) {
+      return res.status(402).json({
+        success: false,
+        error: 'Complete and verify payment before creating an account.'
+      });
+    }
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Checkout validation error:', error.message);
+    return res.status(500).json({ success: false, error: 'Unable to validate payment.' });
+  }
+});
+
+app.post('/api/claim-payment', async (req, res) => {
+  const firebaseUser = await authenticateFirebaseUser(req, res);
+  if (!firebaseUser) return;
+
+  const guestOwnerId = getGuestOwnerId(req);
+  const orderId = String(req.body.orderId || '');
+  if (!guestOwnerId || !orderId) {
+    return res.status(400).json({ success: false, error: 'Verified checkout information is missing.' });
+  }
+
+  try {
+    const payment = await claimGuestPayment({
+      razorpayOrderId: orderId,
+      guestOwnerId,
+      firebaseUserId: firebaseUser.uid,
+      userEmail: firebaseUser.email
+    });
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        error: 'A verified payment could not be linked to this account.'
+      });
+    }
+    return res.json({ success: true, payment });
+  } catch (error) {
+    console.error('Payment claim error:', error.message);
+    return res.status(500).json({ success: false, error: 'Unable to link payment to the account.' });
   }
 });
 

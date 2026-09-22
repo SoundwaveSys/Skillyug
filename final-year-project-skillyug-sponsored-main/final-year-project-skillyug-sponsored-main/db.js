@@ -225,6 +225,35 @@ export const updatePaymentRecord = async ({
   return result.rows[0] || null;
 };
 
+export const claimGuestPayment = async ({
+  razorpayOrderId,
+  guestOwnerId,
+  firebaseUserId,
+  userEmail
+}) => {
+  const result = await pool.query(
+    `UPDATE payment_transactions
+        SET firebase_user_id = $3,
+            user_email = $4,
+            metadata = metadata || $5::jsonb,
+            updated_at = now()
+      WHERE razorpay_order_id = $1
+        AND firebase_user_id IN ($2, $3)
+        AND status IN ('paid', 'authorized')
+      RETURNING id, firebase_user_id, user_email, razorpay_order_id,
+                razorpay_payment_id, amount_paise, currency, status,
+                payment_method, created_at, updated_at`,
+    [
+      razorpayOrderId,
+      guestOwnerId,
+      firebaseUserId,
+      userEmail,
+      JSON.stringify({ claimedAt: new Date().toISOString() })
+    ]
+  );
+  return result.rows[0] || null;
+};
+
 export const processRazorpayWebhook = async ({
   eventId,
   eventType,
