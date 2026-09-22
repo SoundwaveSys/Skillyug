@@ -12,6 +12,69 @@
   color: white;
 }
 
+.admin-view-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.admin-view-tabs button,
+.admin-search button,
+.admin-pagination button {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  padding: 10px 14px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.admin-view-tabs button.active,
+.admin-search button {
+  background: #8fe3cf;
+  color: #0f0546;
+  border-color: #8fe3cf;
+}
+
+.admin-search {
+  margin-bottom: 24px;
+}
+
+.admin-search label {
+  display: block;
+  margin-bottom: 8px;
+  color: #d8d4f4;
+  font-weight: 700;
+}
+
+.admin-search div {
+  display: flex;
+  gap: 10px;
+  max-width: 620px;
+}
+
+.admin-search input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 11px 13px;
+  font: inherit;
+}
+
+.admin-search input::placeholder {
+  color: #b8b2e7;
+}
+
+.admin-search input:focus {
+  outline: 2px solid #8fe3cf;
+  outline-offset: 2px;
+}
+
 .admin-payments-header {
   display: flex;
   align-items: end;
@@ -59,6 +122,10 @@
   min-width: 980px;
 }
 
+.admin-students-table {
+  min-width: 1160px;
+}
+
 .admin-payments-table th,
 .admin-payments-table td {
   padding: 14px 16px;
@@ -102,9 +169,32 @@
 .admin-status-cancelled { background: #8b2b3b; }
 .admin-status-refunded { background: #365b9c; }
 
+.admin-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.admin-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 @media (max-width: 640px) {
   .admin-payments-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .admin-view-tabs,
+  .admin-search div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-pagination {
+    justify-content: space-between;
   }
 }

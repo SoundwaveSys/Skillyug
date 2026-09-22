@@ -150,6 +150,15 @@ export const registerWithEmail = async (email, password, profileData = {}) => {
       role: profileData.role || 'student',
       isGuardianVerified: false
     });
+
+    await saveStudentProfileToDatabase({
+      fullName: profileData.fullName || '',
+      dateOfBirth: profileData.dateOfBirth || '',
+      guardianName: profileData.guardianName || '',
+      guardianEmail: profileData.guardianEmail || '',
+      guardianPhone: profileData.guardianPhone || '',
+      isGuardianVerified: false
+    });
     
     return {
       success: true,
@@ -272,6 +281,10 @@ export const loginWithGoogle = async () => {
         photoURL: user.photoURL,
         role: 'student',
         provider: 'google'
+      });
+      await saveStudentProfileToDatabase({
+        fullName: user.displayName || '',
+        isGuardianVerified: false
       });
     } else {
       // Existing user - update last login
@@ -582,21 +595,23 @@ export const getUserProfile = async () => {
     if (userSnap.exists()) {
       const firestoreProfile = userSnap.data();
       let databaseProfile = null;
-      try {
-        databaseProfile = await loadStudentProfileFromDatabase();
-        if (!databaseProfile) {
-          databaseProfile = await saveStudentProfileToDatabase({
-            fullName: firestoreProfile.fullName || firestoreProfile.displayName || user.displayName || '',
-            dateOfBirth: firestoreProfile.dateOfBirth || '',
-            guardianName: firestoreProfile.guardianName || '',
-            guardianEmail: firestoreProfile.guardianEmail || '',
-            guardianPhone: firestoreProfile.guardianPhone || '',
-            isGuardianVerified: firestoreProfile.isGuardianVerified || false
-          });
+      if ((firestoreProfile.role || 'student') === 'student') {
+        try {
+          databaseProfile = await loadStudentProfileFromDatabase();
+          if (!databaseProfile) {
+            databaseProfile = await saveStudentProfileToDatabase({
+              fullName: firestoreProfile.fullName || firestoreProfile.displayName || user.displayName || '',
+              dateOfBirth: firestoreProfile.dateOfBirth || '',
+              guardianName: firestoreProfile.guardianName || '',
+              guardianEmail: firestoreProfile.guardianEmail || '',
+              guardianPhone: firestoreProfile.guardianPhone || '',
+              isGuardianVerified: firestoreProfile.isGuardianVerified || false
+            });
+          }
+        } catch (databaseError) {
+          console.error('❌ Student profile database sync failed:', databaseError);
+          throw databaseError;
         }
-      } catch (databaseError) {
-        console.error('❌ Student profile database sync failed:', databaseError);
-        throw databaseError;
       }
 
       return {
@@ -632,6 +647,10 @@ export const updateUserProfile = async (profileData) => {
     if (!user) throw new Error('No user logged in');
     
     const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists() || userSnap.data().role !== 'student') {
+      throw new Error('Student profile updates require a student account');
+    }
     
     const databaseProfile = await saveStudentProfileToDatabase(profileData);
 

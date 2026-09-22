@@ -24,10 +24,12 @@ export const initializeStudentProfiles = async () => {
       guardian_email TEXT NOT NULL DEFAULT '',
       guardian_phone TEXT NOT NULL DEFAULT '',
       is_guardian_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      role TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `);
+  await pool.query('ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS role TEXT');
   await pool.query(
     'CREATE INDEX IF NOT EXISTS idx_student_profiles_email ON student_profiles (lower(email))'
   );
@@ -61,6 +63,48 @@ export const findStudentProfile = async (firebaseUserId) => {
   return mapStudentProfile(result.rows[0]);
 };
 
+export const listStudentProfiles = async ({ limit = 25, offset = 0, search = '' } = {}) => {
+  const normalizedSearch = String(search).trim();
+  const escapedSearch = normalizedSearch.replace(/[\\%_]/g, '\\$&');
+  const searchPattern = `%${escapedSearch}%`;
+  const values = normalizedSearch
+    ? [searchPattern, limit, offset]
+    : [limit, offset];
+  const whereClause = normalizedSearch
+    ? `WHERE role = 'student'
+        AND (full_name ILIKE $1 ESCAPE '\\'
+          OR email ILIKE $1 ESCAPE '\\'
+          OR guardian_name ILIKE $1 ESCAPE '\\'
+          OR guardian_email ILIKE $1 ESCAPE '\\'
+          OR guardian_phone ILIKE $1 ESCAPE '\\')`
+    : `WHERE role = 'student'`;
+  const limitParameter = normalizedSearch ? '$2' : '$1';
+  const offsetParameter = normalizedSearch ? '$3' : '$2';
+
+  const [profilesResult, countResult] = await Promise.all([
+    pool.query(
+      `SELECT firebase_user_id, email, full_name, date_of_birth, guardian_name,
+              guardian_email, guardian_phone, is_guardian_verified, created_at, updated_at
+         FROM student_profiles
+         ${whereClause}
+        ORDER BY created_at DESC, id DESC
+        LIMIT ${limitParameter} OFFSET ${offsetParameter}`,
+      values
+    ),
+    pool.query(
+      `SELECT COUNT(*)::integer AS total
+         FROM student_profiles
+         ${whereClause}`,
+      normalizedSearch ? [searchPattern] : []
+    )
+  ]);
+
+  return {
+    students: profilesResult.rows.map(mapStudentProfile),
+    total: countResult.rows[0]?.total || 0
+  };
+};
+
 export const upsertStudentProfile = async ({
   firebaseUserId,
   email,
@@ -69,13 +113,14 @@ export const upsertStudentProfile = async ({
   guardianName = '',
   guardianEmail = '',
   guardianPhone = '',
-  isGuardianVerified = false
+  isGuardianVerified = false,
+  role = 'student'
 }) => {
   const result = await pool.query(
     `INSERT INTO student_profiles
       (firebase_user_id, email, full_name, date_of_birth, guardian_name,
-       guardian_email, guardian_phone, is_guardian_verified)
-     VALUES ($1, $2, $3, NULLIF($4, '')::date, $5, $6, $7, $8)
+       guardian_email, guardian_phone, is_guardian_verified, role)
+     VALUES ($1, $2, $3, NULLIF($4, '')::date, $5, $6, $7, $8, $9)
      ON CONFLICT (firebase_user_id) DO UPDATE SET
        email = EXCLUDED.email,
        full_name = EXCLUDED.full_name,
@@ -84,6 +129,7 @@ export const upsertStudentProfile = async ({
        guardian_email = EXCLUDED.guardian_email,
        guardian_phone = EXCLUDED.guardian_phone,
        is_guardian_verified = EXCLUDED.is_guardian_verified,
+       role = EXCLUDED.role,
        updated_at = now()
      RETURNING firebase_user_id, email, full_name, date_of_birth, guardian_name,
                guardian_email, guardian_phone, is_guardian_verified, created_at, updated_at`,
@@ -95,7 +141,8 @@ export const upsertStudentProfile = async ({
       guardianName,
       guardianEmail,
       guardianPhone,
-      Boolean(isGuardianVerified)
+      Boolean(isGuardianVerified),
+      role
     ]
   );
   return mapStudentProfile(result.rows[0]);

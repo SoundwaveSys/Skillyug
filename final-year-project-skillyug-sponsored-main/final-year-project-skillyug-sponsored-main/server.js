@@ -9,6 +9,7 @@ import {
   updatePaymentRecord,
   processRazorpayWebhook,
   listPaymentTransactions,
+  listStudentProfiles,
   findStudentProfile,
   upsertStudentProfile,
   initializeStudentProfiles
@@ -45,7 +46,7 @@ const authenticateFirebaseUser = async (req, res) => {
   if (!idToken || !apiKey) {
     res.status(401).json({
       success: false,
-      error: 'A signed-in Firebase session is required for payment.'
+      error: 'A signed-in Firebase session is required.'
     });
     return null;
   }
@@ -85,6 +86,22 @@ const authenticateFirebaseUser = async (req, res) => {
   }
 };
 
+const getFirebaseProfile = async (firebaseUser) => {
+  const projectId = process.env.VITE_FIREBASE_PROJECT_ID;
+  if (!projectId) {
+    const error = new Error('Firebase project configuration is missing.');
+    error.code = 'FIREBASE_CONFIG_MISSING';
+    throw error;
+  }
+
+  const response = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/users/${encodeURIComponent(firebaseUser.uid)}`,
+    { headers: { Authorization: `Bearer ${firebaseUser.idToken}` } }
+  );
+  const profile = await response.json();
+  return response.ok ? profile : null;
+};
+
 const safeSignatureMatch = (expected, received) => {
   const expectedBuffer = Buffer.from(expected, 'hex');
   const receivedBuffer = Buffer.from(received, 'hex');
@@ -96,19 +113,9 @@ const authenticateAdmin = async (req, res) => {
   const firebaseUser = await authenticateFirebaseUser(req, res);
   if (!firebaseUser) return null;
 
-  const projectId = process.env.VITE_FIREBASE_PROJECT_ID;
-  if (!projectId) {
-    res.status(503).json({ success: false, error: 'Firebase project configuration is missing.' });
-    return null;
-  }
-
   try {
-    const response = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/users/${encodeURIComponent(firebaseUser.uid)}`,
-      { headers: { Authorization: `Bearer ${firebaseUser.idToken}` } }
-    );
-    const profile = await response.json();
-    if (!response.ok || profile.fields?.role?.stringValue !== 'admin') {
+    const profile = await getFirebaseProfile(firebaseUser);
+    if (profile?.fields?.role?.stringValue !== 'admin') {
       res.status(403).json({ success: false, error: 'Administrator access is required.' });
       return null;
     }
@@ -118,6 +125,68 @@ const authenticateAdmin = async (req, res) => {
     res.status(503).json({ success: false, error: 'Unable to authorize administrator.' });
     return null;
   }
+};
+
+const authenticateStudent = async (req, res) => {
+  const firebaseUser = await authenticateFirebaseUser(req, res);
+  if (!firebaseUser) return null;
+
+  try {
+    const profile = await getFirebaseProfile(firebaseUser);
+    if (profile?.fields?.role?.stringValue !== 'student') {
+      res.status(403).json({ success: false, error: 'Student access is required.' });
+      return null;
+    }
+    return firebaseUser;
+  } catch (error) {
+    console.error('Student authorization failed:', error.message);
+    res.status(503).json({ success: false, error: 'Unable to authorize student.' });
+    return null;
+  }
+};
+
+const firestoreValue = (field) => {
+  if (!field) return '';
+  if (Object.prototype.hasOwnProperty.call(field, 'booleanValue')) return field.booleanValue;
+  return field.stringValue || field.timestampValue || '';
+};
+
+const synchronizeRegisteredStudents = async (admin) => {
+  const projectId = process.env.VITE_FIREBASE_PROJECT_ID;
+  let pageToken = '';
+
+  do {
+    const query = new URLSearchParams({ pageSize: '100' });
+    if (pageToken) query.set('pageToken', pageToken);
+    const response = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/users?${query}`,
+      { headers: { Authorization: `Bearer ${admin.idToken}` } }
+    );
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error?.message || 'Unable to read registered users from Firebase.');
+    }
+
+    const students = (result.documents || []).filter(
+      (document) => firestoreValue(document.fields?.role) === 'student'
+    );
+    await Promise.all(students.map((document) => {
+      const fields = document.fields || {};
+      const firebaseUserId = document.name.split('/').pop();
+      return upsertStudentProfile({
+        firebaseUserId,
+        email: firestoreValue(fields.email),
+        fullName: firestoreValue(fields.fullName) || firestoreValue(fields.displayName),
+        dateOfBirth: firestoreValue(fields.dateOfBirth),
+        guardianName: firestoreValue(fields.guardianName),
+        guardianEmail: firestoreValue(fields.guardianEmail),
+        guardianPhone: firestoreValue(fields.guardianPhone),
+        isGuardianVerified: Boolean(firestoreValue(fields.isGuardianVerified)),
+        role: 'student'
+      });
+    }));
+    pageToken = result.nextPageToken || '';
+  } while (pageToken);
 };
 
 const webhookStatusByEvent = {
@@ -231,7 +300,7 @@ const normalizeStudentProfile = (body = {}) => {
 };
 
 app.get('/api/student-profile', async (req, res) => {
-  const firebaseUser = await authenticateFirebaseUser(req, res);
+  const firebaseUser = await authenticateStudent(req, res);
   if (!firebaseUser) return;
 
   try {
@@ -244,7 +313,7 @@ app.get('/api/student-profile', async (req, res) => {
 });
 
 app.put('/api/student-profile', async (req, res) => {
-  const firebaseUser = await authenticateFirebaseUser(req, res);
+  const firebaseUser = await authenticateStudent(req, res);
   if (!firebaseUser) return;
 
   try {
@@ -259,7 +328,8 @@ app.put('/api/student-profile', async (req, res) => {
       guardianEmail: updates.guardianEmail ?? current?.guardianEmail ?? '',
       guardianPhone: updates.guardianPhone ?? current?.guardianPhone ?? '',
       isGuardianVerified:
-        updates.isGuardianVerified ?? current?.isGuardianVerified ?? false
+          updates.isGuardianVerified ?? current?.isGuardianVerified ?? false,
+        role: 'student'
     });
     return res.json({ success: true, profile });
   } catch (error) {
@@ -595,6 +665,41 @@ app.get('/api/admin/payments', async (req, res) => {
   } catch (error) {
     console.error('Admin payments error:', error.message);
     res.status(500).json({ success: false, error: 'Unable to load payment transactions.' });
+  }
+});
+
+app.get('/api/admin/students', async (req, res) => {
+  try {
+    const admin = await authenticateAdmin(req, res);
+    if (!admin) return;
+
+    const requestedPage = Number.parseInt(req.query.page, 10);
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const page = Number.isFinite(requestedPage) ? Math.max(requestedPage, 1) : 1;
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 100)
+      : 25;
+    const search = String(req.query.search || '').trim().slice(0, 100);
+    await synchronizeRegisteredStudents(admin);
+    const { students, total } = await listStudentProfiles({
+      limit,
+      offset: (page - 1) * limit,
+      search
+    });
+
+    res.json({
+      success: true,
+      students,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(Math.ceil(total / limit), 1)
+      }
+    });
+  } catch (error) {
+    console.error('Admin students error:', error.message);
+    res.status(500).json({ success: false, error: 'Unable to load registered students.' });
   }
 });
 
