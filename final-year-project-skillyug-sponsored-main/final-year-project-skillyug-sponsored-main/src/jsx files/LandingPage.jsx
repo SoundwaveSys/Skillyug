@@ -9,6 +9,7 @@ import Ship from "../components/Astronaut";
 import HexagonProfileSlider from "../components/VerticalSlider";
 import QuizFireworks from "../components/QuizFireworks";
 import Chatbot from "../components/Chatbot";
+import mandarImage from "../components/image/mandar.png";
 
 /* The landing page contains legacy inline demo sections that use local hooks. */
 /* eslint-disable react-hooks/rules-of-hooks */
@@ -960,11 +961,11 @@ const LandingPage = () => {
                                                             `}</style>
                                                     </div>
                           <div className="lp-right-container-landingpage-5">
-                              <div className="lp-owner-note-card">
+                              <div id="cofounder-message" className="lp-owner-note-card">
                                   <img
                                     className="lp-owner-avatar"
-                                    src="final-year-project-skillyug-sponsored-main/final-year-project-skillyug-sponsored-main/src/components/image/mandar.png"
-                                    alt="Founder portrait"
+                                    src={mandarImage}
+                                    alt="Mandar Patil, Co-Founder of PrepMark"
                                     onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = ownerFallback; }}
                                     loading="lazy"
                                   />
