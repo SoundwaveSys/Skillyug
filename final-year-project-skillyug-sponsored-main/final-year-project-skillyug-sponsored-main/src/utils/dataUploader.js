@@ -19,7 +19,7 @@
 
 import * as XLSX from 'xlsx';
 import { batchUploadQuestions } from '../firebase/firestore';
-import { uploadQuestionImage, uploadImageFromURL } from '../firebase/storage';
+import { uploadQuestionImage } from '../firebase/storage';
 
 /**
  * Parse CSV file to JSON
@@ -81,7 +81,7 @@ const parseExcel = async (file) => {
         const questions = XLSX.utils.sheet_to_json(firstSheet);
         
         resolve(questions);
-      } catch (error) {
+      } catch {
         reject(new Error('Failed to parse Excel file'));
       }
     };
@@ -241,7 +241,7 @@ export const uploadQuestionsFromFile = async (file, imageFiles = [], onProgress 
                 question.imageURL = uploadResult.url;
                 question.imageStoragePath = uploadResult.path;
               }
-            } catch (error) {
+            } catch {
               console.warn(`⚠️ Failed to upload image for question ${i + 1}`);
             }
           }

@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import '../Footer Pages/ContactUs.css';
 import ParticleBackground from '../StarBg';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
 
 const ContactUs = () => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     message: ''
@@ -27,11 +25,6 @@ const ContactUs = () => {
     e.preventDefault();
     alert('Thank you for your message! We will get back to you soon.');
     setFormData({ email: '', message: '' });
-  };
-
-  const handleNavigation = (path) => {
-    window.scrollTo(0, 0);
-    navigate(path);
   };
 
   return (

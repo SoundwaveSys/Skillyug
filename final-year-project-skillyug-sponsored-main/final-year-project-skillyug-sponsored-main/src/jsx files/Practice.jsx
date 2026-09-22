@@ -8,14 +8,14 @@ import ParticleBackground from '../components/StarBg';
 
 const Practice = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('quick');
+  const [_activeTab, _setActiveTab] = useState('quick');
   const [syllabusTab, setSyllabusTab] = useState('sat'); // For MAT/SAT tabs in Section 2 (default to SAT)
   const [satSubTab, setSatSubTab] = useState('science'); // For SAT sub-categories (default to science)
   const [socialSubTab, setSocialSubTab] = useState('history'); // For Social Science sub-categories
   
   // Chapter-wise quiz state
   const [selectedSubject, setSelectedSubject] = useState('');
-  const [availableSubjects, setAvailableSubjects] = useState([]);
+  const [, setAvailableSubjects] = useState([]);
   const [chapters, setChapters] = useState([]);
   const [loadingChapters, setLoadingChapters] = useState(false);
 
@@ -98,7 +98,7 @@ const Practice = () => {
     loadChapters();
   }, [socialSubTab, satSubTab, syllabusTab]);
 
-  const quickPracticeOptions = [
+  const _quickPracticeOptions = [
     {
       icon: '⚡',
       title: 'Quick Quiz',
@@ -133,7 +133,7 @@ const Practice = () => {
     }
   ];
 
-  const mockTests = [
+  const _mockTests = [
     {
       icon: '📚',
       title: 'NMMS Practice Test 1',
@@ -190,7 +190,7 @@ const Practice = () => {
     }
   ];
 
-  const skillsData = [
+  const _skillsData = [
     { name: 'Algebra', level: 85, color: '#4CAF50', icon: '📊' },
     { name: 'Geometry', level: 72, color: '#2196F3', icon: '📐' },
     { name: 'Logic', level: 90, color: '#FF9800', icon: '🧩' },
@@ -340,7 +340,7 @@ const Practice = () => {
   };
 
   // Handler for subject tab changes - load chapters for that subject
-  const handleSubjectTabChange = async (subject) => {
+  const _handleSubjectTabChange = async (subject) => {
     setLoadingChapters(true);
     try {
       const result = await getChaptersBySubject(subject);
@@ -358,19 +358,19 @@ const Practice = () => {
     }
   };
 
-  const startQuickPractice = (practice) => {
+  const _startQuickPractice = (practice) => {
     alert(`Starting ${practice.title}! This would navigate to the practice session.`);
   };
 
-  const startTest = (test) => {
+  const _startTest = (test) => {
     alert(`Starting ${test.title}! This would navigate to the full test.`);
   };
 
-  const previewTest = (test) => {
+  const _previewTest = (test) => {
     alert(`Preview for ${test.title}: This would show sample questions and test format.`);
   };
 
-  const startSkillAssessment = (skill) => {
+  const _startSkillAssessment = (skill) => {
     alert(`Starting ${skill.name} skill assessment! This would test your current level.`);
   };
 

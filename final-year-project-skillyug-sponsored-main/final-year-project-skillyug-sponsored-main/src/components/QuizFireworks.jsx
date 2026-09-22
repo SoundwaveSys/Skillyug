@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './QuizFireworks.css';
+
+const COLORS = [
+  '#00d4aa', '#00cec9', '#feca57', '#ff6b6b', '#54a0ff',
+  '#5f27cd', '#ff9f43', '#10ac84', '#f368e0', '#45b7d1'
+];
 
 const QuizFireworks = () => {
   const [fireworks, setFireworks] = useState([]);
 
-  const colors = [
-    '#00d4aa', '#00cec9', '#feca57', '#ff6b6b', '#54a0ff', 
-    '#5f27cd', '#ff9f43', '#10ac84', '#f368e0', '#45b7d1'
-  ];
-
-  const createCelebrationBurst = () => {
+  const createCelebrationBurst = useCallback(() => {
     // Create 3 fireworks for lighter performance
     const positions = ['25%', '50%', '75%'];
     
     positions.forEach((position, index) => {
       setTimeout(() => {
         const id = Date.now() + Math.random() + index;
-        const color = colors[Math.floor(Math.random() * colors.length)];
+        const color = COLORS[Math.floor(Math.random() * COLORS.length)];
         const burstHeight = 25 + Math.random() * 40; // 25-65% from top
         const particles = 12 + Math.random() * 6; // 12-18 particles - reduced
         
@@ -46,7 +46,7 @@ const QuizFireworks = () => {
         }, 3000);
       }, index * 150);
     });
-  };
+  }, []);
 
   useEffect(() => {
     // Start celebration immediately
@@ -60,7 +60,7 @@ const QuizFireworks = () => {
     return () => {
       clearTimeout(secondBurst);
     };
-  }, []);
+  }, [createCelebrationBurst]);
 
   return (
     <div className="quiz-fireworks-container">
@@ -127,7 +127,7 @@ const QuizFireworks = () => {
               left: `${15 + Math.random() * 70}%`,
               top: `${20 + Math.random() * 60}%`,
               animationDelay: `${Math.random() * 2}s`,
-              '--sparkle-color': colors[Math.floor(Math.random() * colors.length)]
+              '--sparkle-color': COLORS[Math.floor(Math.random() * COLORS.length)]
             }}
           ></div>
         ))}

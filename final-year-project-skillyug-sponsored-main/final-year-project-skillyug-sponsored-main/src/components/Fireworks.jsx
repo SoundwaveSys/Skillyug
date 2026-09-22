@@ -1,25 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './Fireworks.css';
+
+const COLORS = [
+  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+  '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+  '#ee5a52', '#0abde3', '#10ac84', '#f368e0', '#feca57'
+];
+
+const LAUNCH_POSITIONS = [
+  { left: '15%', name: 'left' },
+  { left: '50%', name: 'center' },
+  { left: '85%', name: 'right' }
+];
 
 const Fireworks = () => {
   const [fireworks, setFireworks] = useState([]);
 
-  const colors = [
-    '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
-    '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
-    '#ee5a52', '#0abde3', '#10ac84', '#f368e0', '#feca57'
-  ];
-
-  const launchPositions = [
-    { left: '15%', name: 'left' },
-    { left: '50%', name: 'center' },
-    { left: '85%', name: 'right' }
-  ];
-
-  const createFirework = () => {
+  const createFirework = useCallback(() => {
     const id = Date.now() + Math.random();
-    const position = launchPositions[Math.floor(Math.random() * launchPositions.length)];
-    const color = colors[Math.floor(Math.random() * colors.length)];
+    const position = LAUNCH_POSITIONS[Math.floor(Math.random() * LAUNCH_POSITIONS.length)];
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
     const burstHeight = Math.random() * 40 + 20; // 20-60% from top
     const particles = Math.floor(Math.random() * 12) + 8; // 8-20 particles
     
@@ -47,7 +47,7 @@ const Fireworks = () => {
     setTimeout(() => {
       setFireworks(prev => prev.filter(fw => fw.id !== id));
     }, 3000);
-  };
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -57,7 +57,7 @@ const Fireworks = () => {
     }, 800 + Math.random() * 1200); // Random interval between 0.8-2s
 
     return () => clearInterval(interval);
-  }, []);
+  }, [createFirework]);
 
   return (
     <div className="fireworks-container">
@@ -125,7 +125,7 @@ const Fireworks = () => {
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
               animationDelay: `${Math.random() * 4}s`,
-              '--sparkle-color': colors[Math.floor(Math.random() * colors.length)]
+              '--sparkle-color': COLORS[Math.floor(Math.random() * COLORS.length)]
             }}
           ></div>
         ))}

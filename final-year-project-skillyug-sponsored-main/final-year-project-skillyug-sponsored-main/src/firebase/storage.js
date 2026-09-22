@@ -15,7 +15,6 @@
 
 import {
   ref,
-  uploadBytes,
   uploadBytesResumable,
   getDownloadURL,
   deleteObject,
@@ -116,7 +115,7 @@ export const uploadQuestionImage = async (
               size: file.size,
               type: file.type
             });
-          } catch (error) {
+          } catch {
             reject({
               success: false,
               error: 'Failed to get download URL'
@@ -180,7 +179,7 @@ export const uploadProfilePicture = async (file, userId, onProgress = null) => {
               url: downloadURL,
               path: storagePath
             });
-          } catch (error) {
+          } catch {
             reject({ success: false, error: 'Failed to get download URL' });
           }
         }

@@ -74,12 +74,12 @@ const Syllabus = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleDownloadApp = () => {
+  const _handleDownloadApp = () => {
     window.scrollTo(0, 0); // Scroll to top before navigation
     navigate("/");
   };
 
-  const handleStartTrial = () => {
+  const _handleStartTrial = () => {
     window.scrollTo(0, 0); // Scroll to top before navigation
     navigate("/pricing");
   };

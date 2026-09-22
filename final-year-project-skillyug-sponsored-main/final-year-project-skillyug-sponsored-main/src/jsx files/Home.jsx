@@ -20,17 +20,13 @@ const Home = () => {
   
   // User data
   const [userName, setUserName] = useState("Student");
-  const [userLoading, setUserLoading] = useState(true);
+  const [, setUserLoading] = useState(true);
   const [streak, setStreak] = useState(0);
   const [xpLevel, setXpLevel] = useState(1);
   const [xpProgress, setXpProgress] = useState(0); // percentage of current level
   const [totalXP, setTotalXP] = useState(0);
   
   // Quest progress (daily goal)
-  const [questProgress, setQuestProgress] = useState(65); // percentage
-  const [questTarget] = useState("Complete 5 activities today");
-  const [questCompleted, setQuestCompleted] = useState(3);
-  const [questTotal] = useState(5);
   
   // Daily Quiz
   const [showQuizModal, setShowQuizModal] = useState(false);
@@ -40,8 +36,6 @@ const Home = () => {
   const [dailyQuizQuestions, setDailyQuizQuestions] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
   
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [showQuizResult, setShowQuizResult] = useState(false);
 
   // Calculate XP level and progress dynamically
   const calculateXPStats = (xp) => {

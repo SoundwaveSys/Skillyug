@@ -1,21 +1,13 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import '../Footer Pages/PrivacyPolicy.css';
 import ParticleBackground from '../StarBg';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
 
 const PrivacyPolicy = () => {
-  const navigate = useNavigate();
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  const handleNavigation = (path) => {
-    window.scrollTo(0, 0);
-    navigate(path);
-  };
 
   const privacySections = [
     {

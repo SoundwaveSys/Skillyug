@@ -4,7 +4,7 @@ import './StarBg.css';
 const ParticleBackground = () => {
   const canvasRef = useRef(null);
   const particles = useRef([]);
-  let animationFrameId = null;
+  const animationFrameId = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -96,7 +96,7 @@ const ParticleBackground = () => {
       particles.current.forEach((p) => {
         linkPoints(p, particles.current);
       });
-      animationFrameId = requestAnimationFrame(loop);
+      animationFrameId.current = requestAnimationFrame(loop);
     };
 
     const handleResize = () => {
@@ -110,7 +110,7 @@ const ParticleBackground = () => {
     loop();
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(animationFrameId.current);
       window.removeEventListener("resize", handleResize);
     };
   }, []);

@@ -27,7 +27,7 @@ const PracticePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [, setSelectedAnswer] = useState('');
   const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes in seconds
   const [quizStarted, setQuizStarted] = useState(false);
@@ -106,6 +106,8 @@ const PracticePage = () => {
     };
 
     loadQuestions();
+  // Depend on the query fields, not the navigation object identity.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizData.subject, quizData.chapter, quizData.isChapterWise]); // Added specific dependencies
 
   // Timer effect
@@ -123,6 +125,8 @@ const PracticePage = () => {
       }, 1000);
     }
     return () => clearInterval(timer);
+  // handleSubmitQuiz is intentionally excluded so the interval is controlled by quiz state.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizStarted, quizCompleted, timeLeft]);
 
   const formatTime = (seconds) => {

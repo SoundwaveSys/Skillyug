@@ -29,6 +29,8 @@ const Profile = () => {
   // Load user profile on component mount
   useEffect(() => {
     loadUserProfile();
+  // loadUserProfile is a mount-only loader and is intentionally not recreated as a dependency.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadUserProfile = async () => {

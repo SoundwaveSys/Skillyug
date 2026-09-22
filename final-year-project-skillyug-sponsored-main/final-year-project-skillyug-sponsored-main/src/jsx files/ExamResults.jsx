@@ -19,14 +19,12 @@ const ExamResults = () => {
     timeSpent 
   } = location.state || {};
 
-  // If no data, redirect back
-  if (!location.state) {
-    navigate('/exam');
-    return null;
-  }
-
-  // Save exam history to localStorage
   useEffect(() => {
+    if (!location.state) {
+      navigate('/exam');
+      return;
+    }
+
     const examLog = {
       examType,
       totalQuestions,
@@ -49,7 +47,12 @@ const ExamResults = () => {
     
     // Save updated history
     localStorage.setItem('examHistory', JSON.stringify(history));
-  }, [examType, totalQuestions, attempted, correct, wrong, unattempted, score, percentage, timeSpent]);
+  }, [location.state, navigate, examType, totalQuestions, attempted, correct, wrong, unattempted, score, percentage, timeSpent]);
+
+  // If no data, redirect back after the hook has been registered.
+  if (!location.state) {
+    return null;
+  }
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);

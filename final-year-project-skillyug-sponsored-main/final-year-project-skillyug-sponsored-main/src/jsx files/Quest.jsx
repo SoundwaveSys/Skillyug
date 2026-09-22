@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import MainNavbar from '../components/MainNavbar';
 import Footer from '../components/Footer';
 import '../css files/Quest.css';
-import { fetchRandomQuestionsFlat } from '../firebase/firestore';
+import { fetchRandomQuestionsFlat, savePracticeHistory } from '../firebase/firestore';
 import { getUserProfile, updateUserProfile } from '../firebase/auth';
+import { auth } from '../firebase/config';
 
 const Quest = () => {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
+  const currentUser = auth.currentUser;
   
   const QUEST_XP_REWARD = 100;
   const QUESTIONS_PER_QUEST = 10;
@@ -162,6 +164,8 @@ const Quest = () => {
     };
 
     loadUserProgress();
+  // questDefinitions is a stable component constant used for initial progress hydration.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleQuestClick = async (quest) => {

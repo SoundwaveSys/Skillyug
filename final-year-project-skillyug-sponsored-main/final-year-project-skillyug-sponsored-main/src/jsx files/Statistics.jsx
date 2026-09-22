@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { fetchUserStatistics, getUserRank, fetchGlobalLeaderboard, checkAndAwardBadges } from '../firebase/firestore';
+import { fetchUserStatistics, getUserRank, checkAndAwardBadges } from '../firebase/firestore';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -66,6 +66,8 @@ const Statistics = () => {
       loadLocalStats();
       setLoading(false);
     }
+  // loadStatistics is defined in this component and should run only when auth state changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, authLoading]);
 
   const loadLocalStats = () => {

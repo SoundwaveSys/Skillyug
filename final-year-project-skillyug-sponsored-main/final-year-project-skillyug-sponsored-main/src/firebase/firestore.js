@@ -30,8 +30,7 @@ import {
   writeBatch,
   serverTimestamp,
   increment,
-  arrayUnion,
-  arrayRemove
+  arrayUnion
 } from 'firebase/firestore';
 import { db } from './config';
 

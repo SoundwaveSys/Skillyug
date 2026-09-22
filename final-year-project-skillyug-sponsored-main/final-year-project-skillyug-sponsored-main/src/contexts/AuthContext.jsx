@@ -15,6 +15,9 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { onAuthChange, getUserProfile } from '../firebase/auth';
 
+/* This module intentionally exports both the provider and its context hook. */
+/* eslint-disable react-refresh/only-export-components */
+
 // Create context
 const AuthContext = createContext({});
 

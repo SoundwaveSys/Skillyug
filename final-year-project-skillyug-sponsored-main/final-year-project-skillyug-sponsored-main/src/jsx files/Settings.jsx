@@ -135,7 +135,7 @@ const Settings = () => {
     }
   };
 
-  const ToggleSwitch = ({ checked, onChange, label }) => (
+  const ToggleSwitch = ({ checked, onChange, label: _label }) => (
     <div className="toggle-container">
       <div 
         className={`toggle-switch ${checked ? 'active' : ''}`}

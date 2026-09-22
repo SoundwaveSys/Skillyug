@@ -25,7 +25,7 @@ import {
   deleteUser,
   onAuthStateChanged
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from './config';
 
 /**

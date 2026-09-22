@@ -5,7 +5,7 @@ import ParticleBackground from "../components/StarBg";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-const features = [
+const _features = [
   "Interactive games for fun learning",
   "Personalized analytics to track progress",
   "Adaptive content for every skill level",

@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Footer from '../Footer';
 import Navbar from '../Navbar';
 import ParticleBackground from '../StarBg';
@@ -7,16 +6,9 @@ import ParticleBackground from '../StarBg';
 import '../Footer Pages/Refund.css';
 
 const Refund = () => {
-  const navigate = useNavigate();
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  const handleNavigation = (path) => {
-    window.scrollTo(0, 0);
-    navigate(path);
-  };
 
   const refundSections = [
     {
