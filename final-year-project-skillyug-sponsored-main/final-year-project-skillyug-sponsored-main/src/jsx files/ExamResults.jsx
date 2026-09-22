@@ -16,7 +16,8 @@ const ExamResults = () => {
     unattempted, 
     score, 
     percentage, 
-    timeSpent 
+    timeSpent,
+    answerReview = []
   } = location.state || {};
 
   useEffect(() => {
@@ -80,12 +81,15 @@ const ExamResults = () => {
 
   const performance = getPerformanceLevel();
 
-  // Generate question grid data (mock data for visualization)
-  const questionGrid = Array.from({ length: totalQuestions }, (_, i) => {
-    if (i < correct) return { id: i + 1, status: 'correct' };
-    if (i < correct + wrong) return { id: i + 1, status: 'wrong' };
-    return { id: i + 1, status: 'unattempted' };
-  });
+  const questionGrid = answerReview.length > 0
+    ? answerReview.map((item) => ({ id: item.number, status: item.status }))
+    : Array.from({ length: totalQuestions }, (_, i) => {
+        if (i < correct) return { id: i + 1, status: 'correct' };
+        if (i < correct + wrong) return { id: i + 1, status: 'wrong' };
+        return { id: i + 1, status: 'unattempted' };
+      });
+
+  const optionLabel = (index) => String.fromCharCode(65 + index);
 
   return (
     <div className="exam-results-page">
@@ -252,6 +256,62 @@ const ExamResults = () => {
             ))}
           </div>
         </div>
+
+        {answerReview.length > 0 && (
+          <section className="answer-review-section">
+            <div className="answer-review-heading">
+              <div>
+                <p className="answer-review-eyebrow">Post-exam review</p>
+                <h2 className="section-title">Review Answers</h2>
+              </div>
+              <p>Compare your response with the correct answer for every question.</p>
+            </div>
+
+            <div className="answer-review-list">
+              {answerReview.map((item) => {
+                const selectedOption = item.selectedIndex === null
+                  ? null
+                  : item.options[item.selectedIndex];
+                const correctOption = item.options[item.correctIndex];
+
+                return (
+                  <article
+                    key={`${item.id}-${item.number}`}
+                    className={`answer-review-card ${item.status}`}
+                  >
+                    <div className="answer-review-card-header">
+                      <span className="answer-question-number">Question {item.number}</span>
+                      <span className={`answer-status ${item.status}`}>
+                        {item.status === 'correct'
+                          ? 'Correct'
+                          : item.status === 'wrong'
+                            ? 'Incorrect'
+                            : 'Not attempted'}
+                      </span>
+                    </div>
+
+                    <h3>{item.question}</h3>
+
+                    <div className="answer-comparison">
+                      <div className={`answer-box student-answer ${item.status}`}>
+                        <span>Your answer</span>
+                        <strong>
+                          {selectedOption === null
+                            ? 'No answer selected'
+                            : `${optionLabel(item.selectedIndex)}. ${selectedOption}`}
+                        </strong>
+                      </div>
+                      <div className="answer-box correct-answer">
+                        <span>Correct answer</span>
+                        <strong>{optionLabel(item.correctIndex)}. {correctOption}</strong>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Insights Section */}
         <div className="insights-section">

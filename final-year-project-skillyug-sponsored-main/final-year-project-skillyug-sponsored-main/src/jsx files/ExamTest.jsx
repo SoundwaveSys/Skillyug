@@ -226,6 +226,22 @@ const ExamTest = () => {
     const unattempted = questions.length - Object.keys(selectedAnswers).length;
     const score = correctAnswers - (wrongAnswers * 0.25);
     const percentage = ((score / questions.length) * 100).toFixed(2);
+    const answerReview = questions.map((question, index) => {
+      const selectedIndex = selectedAnswers[question.id];
+      return {
+        id: question.id,
+        number: index + 1,
+        question: question.question,
+        options: question.options,
+        selectedIndex: selectedIndex ?? null,
+        correctIndex: question.correct,
+        status: selectedIndex === undefined
+          ? 'unattempted'
+          : selectedIndex === question.correct
+            ? 'correct'
+            : 'wrong'
+      };
+    });
 
     // Store results in state or navigate with results
     navigate('/exam-results', {
@@ -238,7 +254,8 @@ const ExamTest = () => {
         unattempted: unattempted,
         score: score.toFixed(2),
         percentage: percentage,
-        timeSpent: duration * 60 - timeLeft
+        timeSpent: duration * 60 - timeLeft,
+        answerReview
       }
     });
   };
